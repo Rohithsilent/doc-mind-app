@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, ArrowLeft, Mail } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn, signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -34,22 +36,31 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      toast({
-        title: "Login Successful!",
-        description: "Welcome back to your healthcare assistant.",
-      });
-      // Handle actual login logic here
+      setIsLoading(true);
+      try {
+        await signIn(email, password);
+        navigate('/dashboard');
+      } catch (error) {
+        // Error is handled in useAuth hook
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleGoogleLogin = () => {
-    toast({
-      title: "Google Login",
-      description: "Google authentication would be implemented here.",
-    });
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+      navigate('/dashboard');
+    } catch (error) {
+      // Error is handled in useAuth hook
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const cardVariants = {
@@ -177,8 +188,8 @@ const Login = () => {
               </motion.div>
 
               <motion.div variants={inputVariants}>
-                <Button type="submit" variant="hero" className="w-full">
-                  Sign In
+                <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Signing In..." : "Sign In"}
                 </Button>
               </motion.div>
             </form>
@@ -201,9 +212,10 @@ const Login = () => {
                 variant="medical"
                 className="w-full"
                 onClick={handleGoogleLogin}
+                disabled={isLoading}
               >
                 <Mail className="w-4 h-4 mr-2" />
-                Continue with Google
+                {isLoading ? "Signing In..." : "Continue with Google"}
               </Button>
             </motion.div>
 

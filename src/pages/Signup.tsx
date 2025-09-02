@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, ArrowLeft, Mail, Check } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +21,9 @@ const Signup = () => {
     password?: string; 
     confirmPassword?: string 
   }>({});
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const { signUp, signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
 
   const validateForm = () => {
     const newErrors: { 
@@ -54,22 +56,31 @@ const Signup = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      toast({
-        title: "Account Created!",
-        description: "Welcome to your healthcare assistant. Please check your email to verify your account.",
-      });
-      // Handle actual signup logic here
+      setIsLoading(true);
+      try {
+        await signUp(formData.email, formData.password);
+        navigate('/dashboard');
+      } catch (error) {
+        // Error is handled in useAuth hook
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleGoogleSignup = () => {
-    toast({
-      title: "Google Signup",
-      description: "Google authentication would be implemented here.",
-    });
+  const handleGoogleSignup = async () => {
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+      navigate('/dashboard');
+    } catch (error) {
+      // Error is handled in useAuth hook
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -285,8 +296,8 @@ const Signup = () => {
               </motion.div>
 
               <motion.div variants={inputVariants}>
-                <Button type="submit" variant="hero" className="w-full">
-                  Create Account
+                <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
               </motion.div>
             </form>
@@ -309,9 +320,10 @@ const Signup = () => {
                 variant="medical"
                 className="w-full"
                 onClick={handleGoogleSignup}
+                disabled={isLoading}
               >
                 <Mail className="w-4 h-4 mr-2" />
-                Continue with Google
+                {isLoading ? "Signing Up..." : "Continue with Google"}
               </Button>
             </motion.div>
 
