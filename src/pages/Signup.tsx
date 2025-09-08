@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Eye, EyeOff, ArrowLeft, Mail, Check } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Eye, EyeOff, ArrowLeft, Mail, Check, User, Stethoscope, Shield } from "lucide-react";
+import { useAuth, UserRole } from "@/hooks/useAuth";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,22 +15,33 @@ const Signup = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    role: "user" as UserRole
   });
   const [errors, setErrors] = useState<{ 
     email?: string; 
     password?: string; 
-    confirmPassword?: string 
+    confirmPassword?: string;
+    role?: string;
   }>({});
   const [isLoading, setIsLoading] = useState(false);
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  if (user) {
+    const redirectPath = user.role === 'doctor' ? '/doctor/dashboard' : 
+                        user.role === 'healthworker' ? '/healthworker/dashboard' : 
+                        '/user/dashboard';
+    return <Navigate to={redirectPath} replace />;
+  }
 
   const validateForm = () => {
     const newErrors: { 
       email?: string; 
       password?: string; 
-      confirmPassword?: string 
+      confirmPassword?: string;
+      role?: string;
     } = {};
     
     if (!formData.email) {
@@ -52,6 +64,10 @@ const Signup = () => {
       newErrors.confirmPassword = "Passwords do not match";
     }
     
+    if (!formData.role) {
+      newErrors.role = "Please select an account type";
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -61,8 +77,19 @@ const Signup = () => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        await signUp(formData.email, formData.password);
-        navigate('/dashboard');
+        await signUp(formData.email, formData.password, formData.role);
+        
+        // Redirect based on role
+        switch (formData.role) {
+          case 'doctor':
+            navigate('/doctor/dashboard');
+            break;
+          case 'healthworker':
+            navigate('/healthworker/dashboard');
+            break;
+          default:
+            navigate('/user/dashboard');
+        }
       } catch (error) {
         // Error is handled in useAuth hook
       } finally {
@@ -75,7 +102,7 @@ const Signup = () => {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      navigate('/dashboard');
+      navigate('/user/dashboard'); // Default to user dashboard for Google signup
     } catch (error) {
       // Error is handled in useAuth hook
     } finally {
@@ -191,6 +218,41 @@ const Signup = () => {
                 />
                 {errors.email && (
                   <p className="text-sm text-destructive">{errors.email}</p>
+                )}
+              </motion.div>
+
+              <motion.div 
+                className="space-y-2"
+                variants={inputVariants}
+              >
+                <Label htmlFor="role">Account Type</Label>
+                <Select value={formData.role} onValueChange={(value: UserRole) => handleInputChange('role', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">
+                      <div className="flex items-center space-x-2">
+                        <User className="h-4 w-4" />
+                        <span>Patient</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="doctor">
+                      <div className="flex items-center space-x-2">
+                        <Stethoscope className="h-4 w-4" />
+                        <span>Doctor</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="healthworker">
+                      <div className="flex items-center space-x-2">
+                        <Shield className="h-4 w-4" />
+                        <span>Health Worker</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && (
+                  <p className="text-sm text-destructive">{errors.role}</p>
                 )}
               </motion.div>
 

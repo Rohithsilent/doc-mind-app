@@ -7,26 +7,61 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
+export type UserRole = 'user' | 'doctor' | 'healthworker';
+
+export interface AuthUser extends User {
+  role?: UserRole;
+}
+
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  const getUserRole = async (uid: string): Promise<UserRole> => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      if (userDoc.exists()) {
+        return userDoc.data().role || 'user';
+      }
+      return 'user';
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      return 'user';
+    }
+  };
+
+  const setUserRole = async (uid: string, role: UserRole = 'user') => {
+    try {
+      await setDoc(doc(db, 'users', uid), { role }, { merge: true });
+    } catch (error) {
+      console.error('Error setting user role:', error);
+    }
+  };
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const role = await getUserRole(firebaseUser.uid);
+        const userWithRole: AuthUser = { ...firebaseUser, role };
+        setUser(userWithRole);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, role: UserRole = 'user') => {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      await setUserRole(result.user.uid, role);
       toast({
         title: "Account Created!",
         description: "Welcome to your healthcare assistant.",
@@ -63,6 +98,8 @@ export const useAuth = () => {
   const signInWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      // Set default role for new Google users
+      await setUserRole(result.user.uid, 'user');
       toast({
         title: "Google Login Successful!",
         description: "Welcome to your healthcare assistant.",
