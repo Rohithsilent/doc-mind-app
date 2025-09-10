@@ -24,14 +24,19 @@ export const useAuth = () => {
 
   const getUserRole = async (uid: string): Promise<UserRole> => {
     try {
+      console.log('Fetching user role for UID:', uid);
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
-        return userDoc.data().role || 'user';
+        const role = userDoc.data().role || 'user';
+        console.log('Successfully fetched user role:', role);
+        return role;
       }
+      console.log('User document does not exist, defaulting to user role');
       return 'user';
     } catch (error) {
       console.error('Error fetching user role:', error);
-      return 'user';
+      // Don't default to 'user' immediately, let the auth state handle retries
+      throw error;
     }
   };
 
@@ -46,10 +51,19 @@ export const useAuth = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const role = await getUserRole(firebaseUser.uid);
-        const userWithRole: AuthUser = { ...firebaseUser, role };
-        setUser(userWithRole);
+        try {
+          console.log('Auth state changed, user found:', firebaseUser.uid);
+          const role = await getUserRole(firebaseUser.uid);
+          const userWithRole: AuthUser = { ...firebaseUser, role };
+          console.log('Setting user with role:', role);
+          setUser(userWithRole);
+        } catch (error) {
+          console.error('Failed to get user role, keeping user without role for now');
+          // Set user without role, they'll be redirected to login
+          setUser({ ...firebaseUser, role: undefined });
+        }
       } else {
+        console.log('No authenticated user found');
         setUser(null);
       }
       setLoading(false);

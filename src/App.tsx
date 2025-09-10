@@ -25,6 +25,14 @@ const App = () => {
   const getDashboardRedirect = () => {
     if (!user) return "/login";
     
+    console.log('Getting dashboard redirect for user role:', user.role);
+    
+    // If role is undefined (failed to fetch), redirect to login to retry
+    if (!user.role) {
+      console.log('User role is undefined, redirecting to login');
+      return "/login";
+    }
+    
     switch (user.role) {
       case 'doctor':
         return "/doctor/dashboard";
