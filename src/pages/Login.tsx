@@ -42,7 +42,8 @@ const Login = () => {
       setIsLoading(true);
       try {
         await signIn(email, password);
-        navigate('/dashboard');
+        // Let the App.tsx handle redirection based on user role
+        window.location.href = '/dashboard';
       } catch (error) {
         // Error is handled in useAuth hook
       } finally {
@@ -55,7 +56,8 @@ const Login = () => {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      navigate('/dashboard');
+      // Let the App.tsx handle redirection based on user role
+      window.location.href = '/dashboard';
     } catch (error) {
       // Error is handled in useAuth hook
     } finally {
