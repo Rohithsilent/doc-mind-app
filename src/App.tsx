@@ -11,7 +11,7 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import HealthWorkerDashboard from "./pages/HealthWorkerDashboard";
 import FamilyPage from "./pages/FamilyPage";
 import FamilyMemberDashboard from "./pages/FamilyMemberDashboard";
-import AcceptInvitation from "./pages/AcceptInvitation";
+
 import NotFound from "./pages/NotFound";
 import Offline from "./pages/Offline";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
@@ -64,7 +64,7 @@ const App = () => {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/accept-invitation" element={<AcceptInvitation />} />
+            
             
             {/* Role-based dashboard redirects */}
             <Route path="/dashboard" element={<Navigate to={getDashboardRedirect()} replace />} />

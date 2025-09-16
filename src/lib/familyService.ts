@@ -49,8 +49,8 @@ export class FamilyService {
 
       const docRef = await addDoc(collection(db, 'familyMembers'), familyMemberData);
 
-      // TODO: Send email invitation with inviteToken
-      console.log(`Family member invitation sent to ${email} with token: ${inviteToken}`);
+      // In-app invitation created - no email needed
+      console.log(`Family member invitation created for ${email}`);
       
       return docRef.id;
     } catch (error) {
@@ -200,6 +200,56 @@ export class FamilyService {
       });
     } catch (error) {
       console.error('Error updating access permissions:', error);
+      throw error;
+    }
+  }
+
+  // Get pending invitations for a family member by email
+  static async getPendingInvitations(email: string): Promise<FamilyMember[]> {
+    try {
+      const q = query(
+        collection(db, 'familyMembers'),
+        where('email', '==', email.toLowerCase()),
+        where('inviteStatus', '==', 'pending')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        invitedAt: doc.data().invitedAt?.toDate() || new Date(),
+        acceptedAt: doc.data().acceptedAt?.toDate() || undefined
+      })) as FamilyMember[];
+    } catch (error) {
+      console.error('Error getting pending invitations:', error);
+      throw error;
+    }
+  }
+
+  // Reject family member invitation
+  static async rejectInvitation(inviteToken: string): Promise<void> {
+    try {
+      const q = query(
+        collection(db, 'familyMembers'),
+        where('inviteToken', '==', inviteToken),
+        where('inviteStatus', '==', 'pending')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        throw new Error('Invalid or expired invitation token');
+      }
+
+      const inviteDoc = querySnapshot.docs[0];
+      
+      // Update invitation status to rejected
+      await updateDoc(doc(db, 'familyMembers', inviteDoc.id), {
+        inviteStatus: 'rejected',
+        rejectedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error rejecting invitation:', error);
       throw error;
     }
   }

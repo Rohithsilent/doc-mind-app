@@ -8,6 +8,7 @@ import { EmergencySOSButton } from "@/components/dashboard/EmergencySOSButton";
 import { FamilyMonitoringCard } from "@/components/dashboard/FamilyMonitoringCard";
 import { RecentReportsCard } from "@/components/dashboard/RecentReportsCard";
 import { NotificationsPanel } from "@/components/dashboard/NotificationsPanel";
+import { FamilyInvitationNotification } from "@/components/family/FamilyInvitationNotification";
 
 export default function Dashboard() {
   return (
@@ -32,6 +33,9 @@ export default function Dashboard() {
                   Here's your health overview for today, December 7th, 2024
                 </p>
               </motion.div>
+
+              {/* Family Invitations */}
+              <FamilyInvitationNotification />
 
               {/* Dashboard Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
