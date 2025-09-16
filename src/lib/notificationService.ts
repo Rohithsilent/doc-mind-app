@@ -40,17 +40,18 @@ export class NotificationService {
     }
   }
 
-  private checkMedicationTimes(): void {
+  private async checkMedicationTimes(): Promise<void> {
     const settings = this.getNotificationSettings();
     if (!settings.enabled) return;
 
-    const schedules = this.getMedicationSchedules();
+    const schedules = await this.getMedicationSchedules();
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
 
     schedules.forEach(schedule => {
       if (!schedule.taken && schedule.scheduledTime === currentTime) {
         this.createMedicationNotification(schedule, settings.notifyFamily);
+        this.showBrowserNotification(schedule);
       }
     });
   }
@@ -79,6 +80,26 @@ export class NotificationService {
         forFamily: true,
       };
       this.addNotification(familyNotification);
+    }
+  }
+
+  private showBrowserNotification(schedule: MedicationSchedule): void {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const notification = new Notification('Medication Reminder', {
+        body: `Time to take ${schedule.medicationName} (${schedule.dosage})`,
+        icon: '/icon-192x192.png',
+        badge: '/icon-192x192.png',
+        tag: `medication-${schedule.id}`,
+        requireInteraction: true,
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      // Auto close after 10 seconds
+      setTimeout(() => notification.close(), 10000);
     }
   }
 
@@ -111,11 +132,35 @@ export class NotificationService {
     localStorage.setItem('healthNotifications', JSON.stringify([]));
   }
 
-  private getMedicationSchedules(): MedicationSchedule[] {
+  private async getMedicationSchedules(): Promise<MedicationSchedule[]> {
     try {
-      const stored = localStorage.getItem('medicationSchedule');
-      return stored ? JSON.parse(stored) : [];
+      // Get current user from auth
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!user.uid) return [];
+
+      // Import PrescriptionService dynamically to avoid circular dependency
+      const { PrescriptionService } = await import('./prescriptionService');
+      const prescriptions = await PrescriptionService.getPrescriptions(user.uid);
+      
+      const schedules: MedicationSchedule[] = [];
+      prescriptions.forEach(prescription => {
+        prescription.medications.forEach(medication => {
+          medication.times.forEach(time => {
+            schedules.push({
+              id: `${prescription.id}-${medication.name}-${time}`,
+              medicationName: medication.name,
+              dosage: medication.dosage,
+              scheduledTime: time,
+              taken: false,
+              notes: medication.notes,
+            });
+          });
+        });
+      });
+
+      return schedules;
     } catch (error) {
+      console.error('Error getting medication schedules:', error);
       return [];
     }
   }
