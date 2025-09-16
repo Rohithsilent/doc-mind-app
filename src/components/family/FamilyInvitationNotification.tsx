@@ -25,34 +25,40 @@ export function FamilyInvitationNotification() {
     setShowAcceptDialog(true);
   };
 
-  const handleAcceptInvitation = async () => {
+  const handleAcceptInvitation = () => {
     if (!selectedInvitation || !user?.uid) return;
 
-    try {
-      console.log('Attempting to accept invitation:', selectedInvitation.inviteToken);
-      await acceptInvitation({
+    console.log('Attempting to accept invitation:', selectedInvitation.inviteToken);
+    acceptInvitation(
+      {
         inviteToken: selectedInvitation.inviteToken,
         familyMemberUid: user.uid
-      });
-      
-      console.log('Invitation accepted successfully');
-      toast.success('Family invitation accepted successfully!');
-      setShowAcceptDialog(false);
-      setSelectedInvitation(null);
-    } catch (error) {
-      console.error('Error accepting invitation in component:', error);
-      toast.error('Failed to accept invitation. Please try again.');
-    }
+      },
+      {
+        onSuccess: () => {
+          console.log('Invitation accepted successfully');
+          toast.success('Family invitation accepted successfully!');
+          setShowAcceptDialog(false);
+          setSelectedInvitation(null);
+        },
+        onError: (error) => {
+          console.error('Error accepting invitation in component:', error);
+          toast.error('Failed to accept invitation. Please try again.');
+        }
+      }
+    );
   };
 
-  const handleRejectInvitation = async (invitation: FamilyMember) => {
-    try {
-      await rejectInvitation(invitation.inviteToken);
-      toast.success('Invitation declined');
-    } catch (error) {
-      console.error('Error rejecting invitation:', error);
-      toast.error('Failed to decline invitation. Please try again.');
-    }
+  const handleRejectInvitation = (invitation: FamilyMember) => {
+    rejectInvitation(invitation.inviteToken, {
+      onSuccess: () => {
+        toast.success('Invitation declined');
+      },
+      onError: (error) => {
+        console.error('Error rejecting invitation:', error);
+        toast.error('Failed to decline invitation. Please try again.');
+      }
+    });
   };
 
   return (

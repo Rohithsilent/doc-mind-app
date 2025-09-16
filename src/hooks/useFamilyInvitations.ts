@@ -45,8 +45,8 @@ export const useFamilyInvitations = () => {
     pendingInvitations,
     isLoading,
     error,
-    acceptInvitation: acceptInvitationMutation.mutateAsync,
-    rejectInvitation: rejectInvitationMutation.mutateAsync,
+    acceptInvitation: acceptInvitationMutation.mutate,
+    rejectInvitation: rejectInvitationMutation.mutate,
     isAcceptingInvitation: acceptInvitationMutation.isPending,
     isRejectingInvitation: rejectInvitationMutation.isPending,
   };
