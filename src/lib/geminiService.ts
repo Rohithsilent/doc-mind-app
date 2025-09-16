@@ -104,28 +104,39 @@ export class GeminiService {
     try {
       console.log('Analyzing symptoms with Gemini AI...');
 
+      // Map language codes properly
+      const getLanguageName = (langCode: string) => {
+        if (langCode.startsWith('hi')) return 'Hindi';
+        if (langCode.startsWith('te')) return 'Telugu';
+        return 'English';
+      };
+
+      const targetLanguage = getLanguageName(language);
+
       const prompt = `
         As an expert medical AI assistant, analyze the following symptoms and provide a comprehensive assessment in JSON format.
 
+        IMPORTANT: You MUST respond entirely in ${targetLanguage}. All text content should be in ${targetLanguage} language.
+
         Symptoms: ${symptoms}
-        Language: ${language}
 
         Please provide your response as a JSON object with exactly these fields:
         {
-          "assessment": "Brief overall assessment of the condition",
+          "assessment": "Brief overall assessment of the condition in ${targetLanguage}",
           "seriousness": "mild|moderate|serious|emergency",
-          "remedies": ["remedy1", "remedy2", "remedy3"],
-          "precautions": ["precaution1", "precaution2"],
-          "specialistDoctor": "specific type of specialist doctor to consult",
-          "timeframe": "when to seek medical attention"
+          "remedies": ["remedy1 in ${targetLanguage}", "remedy2 in ${targetLanguage}", "remedy3 in ${targetLanguage}"],
+          "precautions": ["precaution1 in ${targetLanguage}", "precaution2 in ${targetLanguage}"],
+          "specialistDoctor": "specific type of specialist doctor to consult in ${targetLanguage}",
+          "timeframe": "when to seek medical attention in ${targetLanguage}"
         }
 
         Important guidelines:
+        - ALL text content must be written in ${targetLanguage}
         - Keep each field concise but informative
         - Remedies should be safe, general wellness advice
         - Always recommend professional medical consultation
         - Be specific about the type of specialist doctor
-        - Respond in ${language === 'hi' ? 'Hindi' : language === 'te' ? 'Telugu' : 'English'}
+        - Only the "seriousness" field should remain in English (mild/moderate/serious/emergency)
       `;
 
       const response = await fetch(`${this.API_URL}?key=${this.API_KEY}`, {
@@ -170,14 +181,49 @@ export class GeminiService {
     } catch (error) {
       console.error('Gemini Symptom Analysis Error:', error);
       
-      // Fallback response
+      // Map language codes properly for fallback
+      const getLanguageName = (langCode: string) => {
+        if (langCode.startsWith('hi')) return 'Hindi';
+        if (langCode.startsWith('te')) return 'Telugu';
+        return 'English';
+      };
+
+      const targetLanguage = getLanguageName(language);
+
+      // Multilingual fallback responses
+      const fallbackResponses = {
+        English: {
+          assessment: "Unable to analyze symptoms at this time. Please consult a healthcare professional.",
+          remedies: ["Rest and stay hydrated", "Monitor symptoms closely", "Avoid self-medication"],
+          precautions: ["Seek immediate medical attention if symptoms worsen", "Keep track of symptom progression"],
+          specialistDoctor: "General Physician",
+          timeframe: "within 24-48 hours if symptoms persist"
+        },
+        Hindi: {
+          assessment: "इस समय लक्षणों का विश्लेषण करने में असमर्थ। कृपया किसी स्वास्थ्य पेशेवर से सलाह लें।",
+          remedies: ["आराम करें और हाइड्रेटेड रहें", "लक्षणों पर बारीकी से नजर रखें", "स्व-चिकित्सा से बचें"],
+          precautions: ["यदि लक्षण बिगड़ते हैं तो तुरंत चिकित्सा सहायता लें", "लक्षणों की प्रगति का रिकॉर्ड रखें"],
+          specialistDoctor: "सामान्य चिकित्सक",
+          timeframe: "यदि लक्षण बने रहते हैं तो 24-48 घंटों के भीतर"
+        },
+        Telugu: {
+          assessment: "ఈ సమయంలో లక్షణాలను విశ్లేషించలేకపోతున్నాము. దయచేసి ఆరోగ్య నిపుణుడిని సంప్రదించండి.",
+          remedies: ["విశ్రాంతి తీసుకోండి మరియు నీరసం తీసుకోండి", "లక్షణాలను దగ్గరగా పర్యవేక్షించండి", "స్వీయ వైద్యం చేయకండి"],
+          precautions: ["లక్షణాలు మరింత దిగజారితే వెంటనే వైద్య సహాయం తీసుకోండి", "లక్షణాల పురోగతి రికార్డు ఉంచండి"],
+          specialistDoctor: "సాధారణ వైద్యుడు",
+          timeframe: "లక్షణాలు కొనసాగితే 24-48 గంటల్లో"
+        }
+      };
+
+      const fallback = fallbackResponses[targetLanguage as keyof typeof fallbackResponses] || fallbackResponses.English;
+      
       return {
-        assessment: "Unable to analyze symptoms at this time. Please consult a healthcare professional.",
+        assessment: fallback.assessment,
         seriousness: "moderate",
-        remedies: ["Rest and stay hydrated", "Monitor symptoms closely", "Avoid self-medication"],
-        precautions: ["Seek immediate medical attention if symptoms worsen", "Keep track of symptom progression"],
-        specialistDoctor: "General Physician",
-        timeframe: "within 24-48 hours if symptoms persist"
+        remedies: fallback.remedies,
+        precautions: fallback.precautions,
+        specialistDoctor: fallback.specialistDoctor,
+        timeframe: fallback.timeframe
       };
     }
   }
