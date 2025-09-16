@@ -2,7 +2,7 @@ import { PrescriptionData } from "@/types/prescription";
 
 export class GeminiService {
   private static readonly API_KEY = "AIzaSyD20kvHZzFGW34dBwG9u01ci4KutDkyOK0";
-  private static readonly API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+  private static readonly API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
   static async generateHealthSuggestions(prescriptionData: PrescriptionData): Promise<string> {
     try {
