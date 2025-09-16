@@ -9,6 +9,7 @@ import {
   Activity,
   Scan,
   Pill,
+  Calendar
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -34,6 +35,7 @@ const healthNavItems = [
   { title: "Vitals", url: "/user/vitals-dashboard", icon: Activity },
   { title: "Scans", url: "/scans", icon: Scan },
   { title: "Prescriptions", url: "/user/prescriptions", icon: Pill },
+  { title: "Appointments", url: "/Appointments", icon: Calendar },
 ];
 
 const otherNavItems = [

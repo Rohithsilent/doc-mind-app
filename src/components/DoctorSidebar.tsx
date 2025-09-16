@@ -31,7 +31,7 @@ const mainNavItems = [
 const clinicalNavItems = [
   { title: "AI Scans Review", url: "/doctor/ai-scans", icon: Activity },
   { title: "Emergency Alerts", url: "/doctor/emergencies", icon: AlertTriangle },
-  { title: "Appointments", url: "/doctor/appointments", icon: Calendar },
+  { title: "Appointments", url: "/doctor-appointments", icon: Calendar },
   { title: "Clinical Tools", url: "/doctor/tools", icon: Stethoscope },
 ];
 

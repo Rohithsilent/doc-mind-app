@@ -157,3 +157,37 @@ class HealthStorage {
 }
 
 export const healthStorage = new HealthStorage();
+
+import { db } from "./firebase";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  orderBy,
+} from "firebase/firestore";
+
+const appointmentsRef = collection(db, "appointments");
+
+// Create a new appointment
+export const createAppointment = async (appointment: {
+  patientName: string;
+  doctorEmail: string;
+  date: string;
+  time: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+}) => {
+  await addDoc(appointmentsRef, appointment);
+};
+
+// Get all appointments (ordered by creation time)
+export const getAppointments = async () => {
+  const q = query(appointmentsRef, orderBy("createdAt", "desc"));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};

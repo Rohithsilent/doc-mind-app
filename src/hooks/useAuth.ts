@@ -42,12 +42,28 @@ export const useAuth = () => {
     }
   };
 
-  const setUserRole = async (uid: string, role: UserRole = 'user') => {
-    // ... (This function remains unchanged)
+  // const setUserRole = async (uid: string, role: UserRole = 'user') => {
+  //   // ... (This function remains unchanged)
+  //   try {
+  //     await setDoc(doc(db, 'users', uid), { role }, { merge: true });
+  //   } catch (error) {
+  //     console.error('Error setting user role:', error);
+  //   }
+  // };
+
+   const setUserData = async (uid: string, email: string | null, role: UserRole = 'user') => {
     try {
-      await setDoc(doc(db, 'users', uid), { role }, { merge: true });
+      await setDoc(
+        doc(db, 'users', uid),
+        {
+          email,
+          role,
+          createdAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
     } catch (error) {
-      console.error('Error setting user role:', error);
+      console.error('Error setting user data:', error);
     }
   };
 
@@ -78,7 +94,8 @@ export const useAuth = () => {
     // ... (This function remains unchanged)
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      await setUserRole(result.user.uid, role);
+      // await setUserRole(result.user.uid, role);
+      await setUserData(result.user.uid, result.user.email, role);
       toast({
         title: "Account Created!",
         description: "Welcome to your healthcare assistant.",
@@ -129,7 +146,8 @@ export const useAuth = () => {
       
       if (!userDoc.exists() && role) {
         // New user - set the provided role
-        await setUserRole(result.user.uid, role);
+        // await setUserRole(result.user.uid, role);
+        await setUserData(result.user.uid, result.user.email, role || 'user');
         toast({
           title: "Account Created!",
           description: "Welcome. Permissions for Google Fit granted.",

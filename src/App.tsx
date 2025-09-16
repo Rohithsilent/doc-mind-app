@@ -13,9 +13,10 @@ import FamilyPage from "./pages/FamilyPage";
 import FamilyMemberDashboard from "./pages/FamilyMemberDashboard";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import VitalsDashboard from "./pages/VitalsDashboard";
-
 import NotFound from "./pages/NotFound";
 import Offline from "./pages/Offline";
+import Appointments from "./pages/Appointments";
+import DoctorAppointments from "./pages/DoctorAppointments";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { RoleGuard } from "./components/RoleGuard";
 import { usePWA } from "./hooks/usePWA";
@@ -103,6 +104,8 @@ const App = () => {
               } 
             />
             
+            <Route path="/appointments" element={<Appointments />} />
+            <Route path="/doctor-appointments" element={<DoctorAppointments />} />
             {/* Doctor dashboard routes */}
             <Route 
               path="/doctor/dashboard" 
