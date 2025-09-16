@@ -89,7 +89,6 @@ export default defineConfig(({ mode }) => ({
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
           charts: ['recharts'],
           animations: ['framer-motion'],
-          firebase: ['firebase'],
           query: ['@tanstack/react-query']
         }
       }
