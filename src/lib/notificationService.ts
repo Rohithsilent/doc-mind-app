@@ -60,7 +60,7 @@ export class NotificationService {
     const notification: Notification = {
       id: `med-${Date.now()}-${schedule.id}`,
       type: "medication",
-      title: "Medication Reminder",
+      title: "💊 Medication Reminder",
       message: `Time to take ${schedule.medicationName} (${schedule.dosage})`,
       time: "now",
       timestamp: Date.now(),
@@ -75,12 +75,16 @@ export class NotificationService {
       const familyNotification: Notification = {
         ...notification,
         id: `family-${notification.id}`,
-        title: "Family Medication Reminder",
+        title: "👨‍👩‍👧‍👦 Family Medication Reminder",
         message: `Reminder: It's time for your family member to take ${schedule.medicationName}`,
         forFamily: true,
+        urgent: false,
       };
       this.addNotification(familyNotification);
     }
+
+    // Trigger storage event to refresh notifications in real-time
+    window.dispatchEvent(new CustomEvent('notificationUpdate'));
   }
 
   private showBrowserNotification(schedule: MedicationSchedule): void {

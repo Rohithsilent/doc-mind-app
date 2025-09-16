@@ -15,7 +15,17 @@ export function NotificationsPanel() {
     // Refresh notifications every minute
     const interval = setInterval(loadNotifications, 60000);
     
-    return () => clearInterval(interval);
+    // Listen for real-time notification updates
+    const handleNotificationUpdate = () => {
+      loadNotifications();
+    };
+    
+    window.addEventListener('notificationUpdate', handleNotificationUpdate);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notificationUpdate', handleNotificationUpdate);
+    };
   }, []);
 
   const loadNotifications = () => {
