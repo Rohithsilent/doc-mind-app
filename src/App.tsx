@@ -13,6 +13,7 @@ import FamilyPage from "./pages/FamilyPage";
 import FamilyMemberDashboard from "./pages/FamilyMemberDashboard";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import VitalsDashboard from "./pages/VitalsDashboard";
+import SymptomChecker from "./pages/SymptomChecker";
 import NotFound from "./pages/NotFound";
 import Offline from "./pages/Offline";
 import Appointments from "./pages/Appointments";
@@ -81,6 +82,14 @@ const App = () => {
               } 
             />
             <Route path="/user/vitals-dashboard" element={<VitalsDashboard />} />
+            <Route 
+              path="/user/symptom-checker" 
+              element={
+                <RoleGuard allowedRoles={['user']}>
+                  <SymptomChecker />
+                </RoleGuard>
+              } 
+            />
             <Route 
               path="/user/family" 
               element={

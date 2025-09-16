@@ -1,7 +1,7 @@
 import { PrescriptionData } from "@/types/prescription";
 
 export class GeminiService {
-  private static readonly API_KEY = "AIzaSyBZ-ppC05jkxeH3_9_EzNsF2M9Yg0SELME";
+  private static readonly API_KEY = "AIzaSyD20kvHZzFGW34dBwG9u01ci4KutDkyOK0";
   private static readonly API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
   static async generateHealthSuggestions(prescriptionData: PrescriptionData): Promise<string> {
@@ -98,5 +98,87 @@ export class GeminiService {
 
 *This information is for educational purposes only and should not replace professional medical advice.*
     `;
+  }
+
+  static async analyzeSymptoms(symptoms: string, language: string = 'en'): Promise<any> {
+    try {
+      console.log('Analyzing symptoms with Gemini AI...');
+
+      const prompt = `
+        As an expert medical AI assistant, analyze the following symptoms and provide a comprehensive assessment in JSON format.
+
+        Symptoms: ${symptoms}
+        Language: ${language}
+
+        Please provide your response as a JSON object with exactly these fields:
+        {
+          "assessment": "Brief overall assessment of the condition",
+          "seriousness": "mild|moderate|serious|emergency",
+          "remedies": ["remedy1", "remedy2", "remedy3"],
+          "precautions": ["precaution1", "precaution2"],
+          "specialistDoctor": "specific type of specialist doctor to consult",
+          "timeframe": "when to seek medical attention"
+        }
+
+        Important guidelines:
+        - Keep each field concise but informative
+        - Remedies should be safe, general wellness advice
+        - Always recommend professional medical consultation
+        - Be specific about the type of specialist doctor
+        - Respond in ${language === 'hi' ? 'Hindi' : language === 'te' ? 'Telugu' : 'English'}
+      `;
+
+      const response = await fetch(`${this.API_URL}?key=${this.API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            topK: 20,
+            topP: 0.8,
+            maxOutputTokens: 1024,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        const responseText = data.candidates[0].content.parts[0].text;
+        
+        // Extract JSON from the response
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No valid JSON found in response');
+        }
+      } else {
+        throw new Error('Invalid response format from Gemini API');
+      }
+    } catch (error) {
+      console.error('Gemini Symptom Analysis Error:', error);
+      
+      // Fallback response
+      return {
+        assessment: "Unable to analyze symptoms at this time. Please consult a healthcare professional.",
+        seriousness: "moderate",
+        remedies: ["Rest and stay hydrated", "Monitor symptoms closely", "Avoid self-medication"],
+        precautions: ["Seek immediate medical attention if symptoms worsen", "Keep track of symptom progression"],
+        specialistDoctor: "General Physician",
+        timeframe: "within 24-48 hours if symptoms persist"
+      };
+    }
   }
 }
