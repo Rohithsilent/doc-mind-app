@@ -22,8 +22,13 @@ export const useFamilyInvitations = () => {
     mutationFn: ({ inviteToken, familyMemberUid }: { inviteToken: string; familyMemberUid: string }) =>
       FamilyService.acceptInvitation(inviteToken, familyMemberUid),
     onSuccess: () => {
+      console.log('Invitation accepted successfully, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['familyInvitations'] });
       queryClient.invalidateQueries({ queryKey: ['familyRelationships'] });
+      queryClient.invalidateQueries({ queryKey: ['familyMembers'] });
+    },
+    onError: (error) => {
+      console.error('Mutation error in useFamilyInvitations:', error);
     },
   });
 

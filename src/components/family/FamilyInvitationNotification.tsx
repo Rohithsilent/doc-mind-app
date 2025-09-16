@@ -29,16 +29,18 @@ export function FamilyInvitationNotification() {
     if (!selectedInvitation || !user?.uid) return;
 
     try {
+      console.log('Attempting to accept invitation:', selectedInvitation.inviteToken);
       await acceptInvitation({
         inviteToken: selectedInvitation.inviteToken,
         familyMemberUid: user.uid
       });
       
+      console.log('Invitation accepted successfully');
       toast.success('Family invitation accepted successfully!');
       setShowAcceptDialog(false);
       setSelectedInvitation(null);
     } catch (error) {
-      console.error('Error accepting invitation:', error);
+      console.error('Error accepting invitation in component:', error);
       toast.error('Failed to accept invitation. Please try again.');
     }
   };

@@ -111,17 +111,19 @@ export class FamilyService {
     try {
       const q = query(
         collection(db, 'familyMembers'),
-        where('addedBy', '==', patientUid),
-        orderBy('invitedAt', 'desc')
+        where('addedBy', '==', patientUid)
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      const familyMembers = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         invitedAt: doc.data().invitedAt?.toDate() || new Date(),
         acceptedAt: doc.data().acceptedAt?.toDate() || undefined
       })) as FamilyMember[];
+
+      // Sort by invitedAt in memory instead of using orderBy in query
+      return familyMembers.sort((a, b) => b.invitedAt.getTime() - a.invitedAt.getTime());
     } catch (error) {
       console.error('Error getting family members:', error);
       throw error;
@@ -209,17 +211,19 @@ export class FamilyService {
     try {
       const q = query(
         collection(db, 'familyMembers'),
-        where('email', '==', email.toLowerCase()),
-        where('inviteStatus', '==', 'pending')
+        where('email', '==', email.toLowerCase())
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      const allInvitations = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         invitedAt: doc.data().invitedAt?.toDate() || new Date(),
         acceptedAt: doc.data().acceptedAt?.toDate() || undefined
       })) as FamilyMember[];
+
+      // Filter pending invitations in memory
+      return allInvitations.filter(invitation => invitation.inviteStatus === 'pending');
     } catch (error) {
       console.error('Error getting pending invitations:', error);
       throw error;
