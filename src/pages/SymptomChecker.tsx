@@ -6,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { Navbar } from "@/components/Navbar";
 import { 
   Mic, 
   MicOff, 
@@ -239,8 +242,13 @@ export default function SymptomChecker() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-secondary p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <SidebarInset className="flex-1">
+          <Navbar />
+          <div className="min-h-screen bg-gradient-secondary p-4">
+            <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -488,7 +496,10 @@ export default function SymptomChecker() {
             </motion.div>
           )}
         </AnimatePresence>
+            </div>
+          </div>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
