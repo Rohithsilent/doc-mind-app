@@ -17,13 +17,15 @@ const Signup = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "user" as UserRole
+    role: "user" as UserRole,
+    specialist: ""
   });
   const [errors, setErrors] = useState<{ 
     email?: string; 
     password?: string; 
     confirmPassword?: string;
     role?: string;
+    specialist?: string;
   }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -44,6 +46,7 @@ const Signup = () => {
       password?: string; 
       confirmPassword?: string;
       role?: string;
+      specialist?: string;
     } = {};
     
     if (!formData.email) {
@@ -70,6 +73,10 @@ const Signup = () => {
       newErrors.role = "Please select an account type";
     }
     
+    if (formData.role === 'doctor' && !formData.specialist) {
+      newErrors.specialist = "Please select your specialization";
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -79,7 +86,7 @@ const Signup = () => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        await signUp(formData.email, formData.password, formData.role);
+        await signUp(formData.email, formData.password, formData.role, formData.specialist);
         
         // Redirect based on role
         switch (formData.role) {
@@ -104,10 +111,10 @@ const Signup = () => {
     setShowRoleModal(true);
   };
 
-  const handleRoleSelection = async (role: UserRole) => {
+  const handleRoleSelection = async (role: UserRole, specialist?: string) => {
     setIsLoading(true);
     try {
-      await signInWithGoogle(role);
+      await signInWithGoogle(role, specialist);
       setShowRoleModal(false);
       
       // Redirect based on role
@@ -280,7 +287,48 @@ const Signup = () => {
                 )}
               </motion.div>
 
-              <motion.div 
+              {/* Specialist field for doctors */}
+              {formData.role === 'doctor' && (
+                <motion.div 
+                  className="space-y-2"
+                  variants={inputVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Label htmlFor="specialist">Medical Specialization</Label>
+                  <Select value={formData.specialist} onValueChange={(value) => handleInputChange('specialist', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your specialization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cardiology">Cardiology</SelectItem>
+                      <SelectItem value="dermatology">Dermatology</SelectItem>
+                      <SelectItem value="emergency">Emergency Medicine</SelectItem>
+                      <SelectItem value="endocrinology">Endocrinology</SelectItem>
+                      <SelectItem value="family">Family Medicine</SelectItem>
+                      <SelectItem value="gastroenterology">Gastroenterology</SelectItem>
+                      <SelectItem value="internal">Internal Medicine</SelectItem>
+                      <SelectItem value="neurology">Neurology</SelectItem>
+                      <SelectItem value="obstetrics">Obstetrics & Gynecology</SelectItem>
+                      <SelectItem value="oncology">Oncology</SelectItem>
+                      <SelectItem value="ophthalmology">Ophthalmology</SelectItem>
+                      <SelectItem value="orthopedics">Orthopedics</SelectItem>
+                      <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                      <SelectItem value="psychiatry">Psychiatry</SelectItem>
+                      <SelectItem value="pulmonology">Pulmonology</SelectItem>
+                      <SelectItem value="radiology">Radiology</SelectItem>
+                      <SelectItem value="surgery">Surgery</SelectItem>
+                      <SelectItem value="urology">Urology</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.specialist && (
+                    <p className="text-sm text-destructive">{errors.specialist}</p>
+                  )}
+                </motion.div>
+              )}
+
+              <motion.div
                 className="space-y-2"
                 variants={inputVariants}
               >

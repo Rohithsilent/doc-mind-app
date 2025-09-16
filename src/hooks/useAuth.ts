@@ -51,15 +51,21 @@ export const useAuth = () => {
   //   }
   // };
 
-   const setUserData = async (uid: string, email: string | null, role: UserRole = 'user') => {
+   const setUserData = async (uid: string, email: string | null, role: UserRole = 'user', specialist?: string) => {
     try {
+      const userData: any = {
+        email,
+        role,
+        createdAt: new Date().toISOString(),
+      };
+      
+      if (role === 'doctor' && specialist) {
+        userData.specialist = specialist;
+      }
+      
       await setDoc(
         doc(db, 'users', uid),
-        {
-          email,
-          role,
-          createdAt: new Date().toISOString(),
-        },
+        userData,
         { merge: true }
       );
     } catch (error) {
@@ -90,12 +96,12 @@ export const useAuth = () => {
     return unsubscribe;
   }, []);
 
-  const signUp = async (email: string, password: string, role: UserRole = 'user') => {
+  const signUp = async (email: string, password: string, role: UserRole = 'user', specialist?: string) => {
     // ... (This function remains unchanged)
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       // await setUserRole(result.user.uid, role);
-      await setUserData(result.user.uid, result.user.email, role);
+      await setUserData(result.user.uid, result.user.email, role, specialist);
       toast({
         title: "Account Created!",
         description: "Welcome to your healthcare assistant.",
@@ -131,7 +137,7 @@ export const useAuth = () => {
   };
 
   // --- THIS FUNCTION IS UPDATED ---
-  const signInWithGoogle = async (role?: UserRole) => {
+  const signInWithGoogle = async (role?: UserRole, specialist?: string) => {
     try {
       // Add the Google Fit scopes here
       googleProvider.addScope("https://www.googleapis.com/auth/fitness.activity.read");
@@ -147,7 +153,7 @@ export const useAuth = () => {
       if (!userDoc.exists() && role) {
         // New user - set the provided role
         // await setUserRole(result.user.uid, role);
-        await setUserData(result.user.uid, result.user.email, role || 'user');
+        await setUserData(result.user.uid, result.user.email, role || 'user', specialist);
         toast({
           title: "Account Created!",
           description: "Welcome. Permissions for Google Fit granted.",
