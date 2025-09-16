@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,6 +85,17 @@ export default function SymptomChecker() {
     isSupported: speechSynthesisSupported
   } = useSpeechSynthesis();
 
+  // Update symptoms field with real-time transcript
+  useEffect(() => {
+    if (isListening && transcript) {
+      setSymptoms(prev => {
+        // Replace the previous transcript portion with the new one
+        const baseText = prev.replace(/\s*\[Live transcript:.*?\]$/, '').trim();
+        return baseText ? `${baseText} [Live transcript: ${transcript}]` : `[Live transcript: ${transcript}]`;
+      });
+    }
+  }, [transcript, isListening]);
+
   const handleStartListening = () => {
     resetTranscript();
     startListening();
@@ -93,7 +104,11 @@ export default function SymptomChecker() {
   const handleStopListening = () => {
     stopListening();
     if (transcript) {
-      setSymptoms(prev => prev ? `${prev} ${transcript}` : transcript);
+      setSymptoms(prev => {
+        // Remove the live transcript marker and keep the final transcript
+        const baseText = prev.replace(/\s*\[Live transcript:.*?\]$/, '').trim();
+        return baseText ? `${baseText} ${transcript}` : transcript;
+      });
     }
   };
 
