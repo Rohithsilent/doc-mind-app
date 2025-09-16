@@ -57,19 +57,35 @@ export function VitalsCard() {
         });
       };
       
-      const stepsRequestBody = { /* ...unchanged... */ };
-      const heartRateRequestBody = { /* ...unchanged... */ };
-      const spo2RequestBody = { /* ...unchanged... */ };
+      const stepsRequestBody: any = {
+        aggregateBy: [{ 
+          dataTypeName: "com.google.step_count.delta", 
+          dataSourceId: "derived:com.google.step_count.delta:com.google.android.gms:estimated_steps" 
+        }],
+        bucketByTime: { durationMillis: 86400000 },
+        startTimeMillis: startTime.getTime(),
+        endTimeMillis: endTime.getTime()
+      };
 
-      // Re-add request bodies for clarity
-      stepsRequestBody.aggregateBy = [{ dataTypeName: "com.google.step_count.delta", dataSourceId: "derived:com.google.step_count.delta:com.google.android.gms:estimated_steps" }];
-      heartRateRequestBody.aggregateBy = [{ dataTypeName: "com.google.heart_rate.bpm", dataSourceId: "derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm" }];
-      spo2RequestBody.aggregateBy = [{ dataTypeName: "com.google.oxygen_saturation", dataSourceId: "derived:com.google.oxygen_saturation:com.google.android.gms:merge_oxygen_saturation" }];
-      [stepsRequestBody, heartRateRequestBody, spo2RequestBody].forEach(body => {
-        body.bucketByTime = { durationMillis: 86400000 };
-        body.startTimeMillis = startTime.getTime();
-        body.endTimeMillis = endTime.getTime();
-      });
+      const heartRateRequestBody: any = {
+        aggregateBy: [{ 
+          dataTypeName: "com.google.heart_rate.bpm", 
+          dataSourceId: "derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm" 
+        }],
+        bucketByTime: { durationMillis: 86400000 },
+        startTimeMillis: startTime.getTime(),
+        endTimeMillis: endTime.getTime()
+      };
+
+      const spo2RequestBody: any = {
+        aggregateBy: [{ 
+          dataTypeName: "com.google.oxygen_saturation", 
+          dataSourceId: "derived:com.google.oxygen_saturation:com.google.android.gms:merge_oxygen_saturation" 
+        }],
+        bucketByTime: { durationMillis: 86400000 },
+        startTimeMillis: startTime.getTime(),
+        endTimeMillis: endTime.getTime()
+      };
 
       try {
         const results = await Promise.allSettled([
