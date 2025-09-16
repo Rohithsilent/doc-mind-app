@@ -9,8 +9,12 @@ import { FamilyMonitoringCard } from "@/components/dashboard/FamilyMonitoringCar
 import { RecentReportsCard } from "@/components/dashboard/RecentReportsCard";
 import { NotificationsPanel } from "@/components/dashboard/NotificationsPanel";
 import { FamilyInvitationNotification } from "@/components/family/FamilyInvitationNotification";
+import { useEmergencyAlerts } from "@/hooks/useEmergencyAlerts";
 
 export default function Dashboard() {
+  // Initialize emergency alerts listener
+  useEmergencyAlerts();
+  
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-background">

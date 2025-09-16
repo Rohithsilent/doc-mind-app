@@ -2,20 +2,37 @@ import { Phone, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { emergencyService } from "@/lib/emergencyService";
+import { useToast } from "@/hooks/use-toast";
 
 export function EmergencySOSButton() {
   const [isPressed, setIsPressed] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleEmergencyCall = () => {
-    setIsPressed(true);
-    // Simulate emergency call logic
-    setTimeout(() => setIsPressed(false), 3000);
+  const handleEmergencyCall = async () => {
+    if (!user) return;
     
-    // In a real app, this would:
-    // - Call emergency services
-    // - Send location data
-    // - Alert emergency contacts
-    // - Record the emergency event
+    setIsPressed(true);
+    
+    try {
+      await emergencyService.createEmergencyAlert(user.uid, user.displayName || user.email || 'Unknown User');
+      
+      toast({
+        title: "Emergency Alert Sent",
+        description: "Your family members have been notified",
+      });
+    } catch (error) {
+      console.error('Error sending emergency alert:', error);
+      toast({
+        title: "Emergency Alert Failed",
+        description: "Failed to send emergency alert",
+        variant: "destructive",
+      });
+    }
+    
+    setTimeout(() => setIsPressed(false), 3000);
   };
 
   return (
