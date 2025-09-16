@@ -2,31 +2,22 @@ import { Users, AlertCircle, Check, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { FAMILY_ROLE_LABELS } from "@/types/family";
 
 export function FamilyMonitoringCard() {
-  const familyMembers = [
-    {
-      name: "Margaret Smith",
-      relation: "Mother",
-      status: "normal",
-      lastUpdate: "2 hours ago",
-      alert: null,
-    },
-    {
-      name: "John Smith Sr.",
-      relation: "Father", 
-      status: "attention",
-      lastUpdate: "30 minutes ago",
-      alert: "High blood pressure reading",
-    },
-    {
-      name: "Emma Smith",
-      relation: "Daughter",
-      status: "normal",
-      lastUpdate: "1 hour ago",
-      alert: null,
-    },
-  ];
+  const { familyMembers, isLoading } = useFamilyMembers();
+
+  // Transform family members data to include status and last update
+  const familyMembersWithStatus = familyMembers
+    .filter(member => member.inviteStatus === 'accepted')
+    .map(member => ({
+      name: member.name,
+      relation: member.customRole || FAMILY_ROLE_LABELS[member.role],
+      status: "normal", // Default status - could be enhanced with real health data
+      lastUpdate: "Recently", // Could be enhanced with real update timestamps
+      alert: null, // Could be enhanced with real health alerts
+    }));
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -66,34 +57,40 @@ export function FamilyMonitoringCard() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {familyMembers.map((member, index) => (
-            <motion.div
-              key={member.name}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-secondary">
-                  {getStatusIcon(member.status)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm">{member.name}</p>
-                    {getStatusBadge(member.status)}
+          {isLoading ? (
+            <div className="text-center text-muted-foreground">Loading family members...</div>
+          ) : familyMembersWithStatus.length === 0 ? (
+            <div className="text-center text-muted-foreground">No family members added yet</div>
+          ) : (
+            familyMembersWithStatus.map((member, index) => (
+              <motion.div
+                key={member.name}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-secondary">
+                    {getStatusIcon(member.status)}
                   </div>
-                  <p className="text-xs text-muted-foreground">{member.relation}</p>
-                  {member.alert && (
-                    <p className="text-xs text-orange-600 mt-1">{member.alert}</p>
-                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm">{member.name}</p>
+                      {getStatusBadge(member.status)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{member.relation}</p>
+                    {member.alert && (
+                      <p className="text-xs text-orange-600 mt-1">{member.alert}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">{member.lastUpdate}</p>
-              </div>
-            </motion.div>
-          ))}
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">{member.lastUpdate}</p>
+                </div>
+              </motion.div>
+            ))
+          )}
           
           <motion.div
             initial={{ opacity: 0 }}
