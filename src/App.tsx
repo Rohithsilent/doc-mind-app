@@ -12,6 +12,7 @@ import HealthWorkerDashboard from "./pages/HealthWorkerDashboard";
 import FamilyPage from "./pages/FamilyPage";
 import FamilyMemberDashboard from "./pages/FamilyMemberDashboard";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
+import VitalsDashboard from "./pages/VitalsDashboard";
 
 import NotFound from "./pages/NotFound";
 import Offline from "./pages/Offline";
@@ -19,7 +20,6 @@ import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { RoleGuard } from "./components/RoleGuard";
 import { usePWA } from "./hooks/usePWA";
 import { useAuth } from "./hooks/useAuth";
-
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -79,6 +79,7 @@ const App = () => {
                 </RoleGuard>
               } 
             />
+            <Route path="/user/vitals-dashboard" element={<VitalsDashboard />} />
             <Route 
               path="/user/family" 
               element={
