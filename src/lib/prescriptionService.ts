@@ -41,8 +41,7 @@ export class PrescriptionService {
     try {
       const q = query(
         collection(db, 'prescriptions'),
-        where('userUid', '==', userUid),
-        orderBy('savedAt', 'desc')
+        where('userUid', '==', userUid)
       );
       
       const querySnapshot = await getDocs(q);
