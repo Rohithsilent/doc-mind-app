@@ -1,7 +1,7 @@
 import { PrescriptionData } from "@/types/prescription";
 
 export class GeminiService {
-  private static readonly API_KEY = "AIzaSyD20kvHZzFGW34dBwG9u01ci4KutDkyOK0";
+  private static readonly API_KEY = "AIzaSyDOaeY026pfHL6h1752xQepWUI_Xahbbxc";
   private static readonly API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
   static async generateHealthSuggestions(prescriptionData: PrescriptionData): Promise<string> {
@@ -225,6 +225,87 @@ export class GeminiService {
         specialistDoctor: fallback.specialistDoctor,
         timeframe: fallback.timeframe
       };
+    }
+  }
+
+  static async chatWithHealthAssistant(
+    question: string, 
+    prescriptions: PrescriptionData[] = [], 
+    reports: any[] = []
+  ): Promise<string> {
+    try {
+      console.log('Chatting with Gemini Health Assistant...');
+
+      // Format patient data for context
+      const prescriptionContext = prescriptions.length > 0 
+        ? prescriptions.map(p => 
+            `Prescription from ${p.extractedAt}:\n` +
+            p.medications.map(med => 
+              `- ${med.name} (${med.dosage}) - ${med.frequency}`
+            ).join('\n')
+          ).join('\n\n')
+        : 'No prescription data available.';
+
+      const reportsContext = reports.length > 0
+        ? reports.map(r => `Report: ${r.title} (${r.type}) - ${r.date}`).join('\n')
+        : 'No reports available.';
+
+      const prompt = `
+        You are an AI health assistant helping a patient. You have access to their medical data below.
+        
+        PATIENT'S PRESCRIPTION DATA:
+        ${prescriptionContext}
+        
+        PATIENT'S REPORTS:
+        ${reportsContext}
+        
+        PATIENT'S QUESTION: ${question}
+        
+        Instructions:
+        - Provide helpful, accurate health information
+        - Reference the patient's specific prescriptions and reports when relevant
+        - Always remind users to consult healthcare professionals for medical decisions
+        - Be concise but informative
+        - If the question is about general health topics not related to their data, provide general advice
+        - If asking about specific medications or reports, use their actual data
+        
+        Please provide a helpful response:
+      `;
+
+      const response = await fetch(`${this.API_URL}?key=${this.API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        return data.candidates[0].content.parts[0].text;
+      } else {
+        throw new Error('Invalid response format from Gemini API');
+      }
+    } catch (error) {
+      console.error('Gemini Chat Error:', error);
+      return "I'm sorry, I'm having trouble processing your question right now. Please consult with your healthcare provider for medical advice, or try asking your question again.";
     }
   }
 }
