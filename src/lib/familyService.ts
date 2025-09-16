@@ -32,21 +32,22 @@ export class FamilyService {
     try {
       const inviteToken = crypto.randomUUID();
       
-      const familyMember: Omit<FamilyMember, 'id'> = {
+      const familyMemberData: any = {
         name,
         email: email.toLowerCase(),
         role,
-        customRole,
         inviteStatus: 'pending',
         inviteToken,
-        invitedAt: new Date(),
+        invitedAt: serverTimestamp(),
         addedBy: patientUid
       };
 
-      const docRef = await addDoc(collection(db, 'familyMembers'), {
-        ...familyMember,
-        invitedAt: serverTimestamp()
-      });
+      // Only include customRole if it has a value
+      if (customRole) {
+        familyMemberData.customRole = customRole;
+      }
+
+      const docRef = await addDoc(collection(db, 'familyMembers'), familyMemberData);
 
       // TODO: Send email invitation with inviteToken
       console.log(`Family member invitation sent to ${email} with token: ${inviteToken}`);
