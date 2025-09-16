@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, ArrowLeft, Mail, Check, User, Stethoscope, Shield } from "lucide-react";
 import { useAuth, UserRole } from "@/hooks/useAuth";
+import { RoleSelectionModal } from "@/components/RoleSelectionModal";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +26,7 @@ const Signup = () => {
     role?: string;
   }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const { signUp, signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
 
@@ -99,15 +101,37 @@ const Signup = () => {
   };
 
   const handleGoogleSignup = async () => {
+    setShowRoleModal(true);
+  };
+
+  const handleRoleSelection = async (role: UserRole) => {
     setIsLoading(true);
     try {
-      await signInWithGoogle();
-      navigate('/user/dashboard'); // Default to user dashboard for Google signup
+      await signInWithGoogle(role);
+      setShowRoleModal(false);
+      
+      // Redirect based on role
+      switch (role) {
+        case 'doctor':
+          navigate('/doctor/dashboard');
+          break;
+        case 'healthworker':
+          navigate('/healthworker/dashboard');
+          break;
+        default:
+          navigate('/user/dashboard');
+      }
     } catch (error) {
       // Error is handled in useAuth hook
+      setShowRoleModal(false);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRoleModalCancel = () => {
+    setShowRoleModal(false);
+    setIsLoading(false);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -401,6 +425,13 @@ const Signup = () => {
           </CardContent>
         </Card>
       </motion.div>
+      
+      <RoleSelectionModal
+        isOpen={showRoleModal}
+        onRoleSelect={handleRoleSelection}
+        onCancel={handleRoleModalCancel}
+        isLoading={isLoading}
+      />
     </div>
   );
 };

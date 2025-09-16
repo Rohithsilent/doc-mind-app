@@ -109,19 +109,32 @@ export const useAuth = () => {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (role?: UserRole) => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      // Set default role for new Google users
-      await setUserRole(result.user.uid, 'user');
-      toast({
-        title: "Google Login Successful!",
-        description: "Welcome to your healthcare assistant.",
-      });
+      
+      // Check if user already exists
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      
+      if (!userDoc.exists() && role) {
+        // New user - set the provided role
+        await setUserRole(result.user.uid, role);
+        toast({
+          title: "Account Created!",
+          description: "Welcome to your healthcare assistant.",
+        });
+      } else if (userDoc.exists()) {
+        // Existing user - just sign them in
+        toast({
+          title: "Login Successful!",
+          description: "Welcome back to your healthcare assistant.",
+        });
+      }
+      
       return result;
     } catch (error: any) {
       toast({
-        title: "Google Login Failed",
+        title: "Google Sign-in Failed",
         description: error.message,
         variant: "destructive",
       });
