@@ -4,9 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { FAMILY_ROLE_LABELS } from "@/types/family";
+import { useNavigate } from "react-router-dom";
 
 export function FamilyMonitoringCard() {
   const { familyMembers, isLoading } = useFamilyMembers();
+  const navigate = useNavigate();
 
   // Transform family members data to include status and last update
   const familyMembersWithStatus = familyMembers
@@ -98,7 +100,10 @@ export function FamilyMonitoringCard() {
             transition={{ delay: 0.4 }}
             className="pt-2 border-t border-border"
           >
-            <button className="w-full text-center text-sm text-primary hover:text-primary/80 transition-colors">
+            <button 
+              onClick={() => navigate('/user/family')}
+              className="w-full text-center text-sm text-primary hover:text-primary/80 transition-colors"
+            >
               View All Family Members →
             </button>
           </motion.div>
