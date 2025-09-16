@@ -23,6 +23,7 @@ import { RoleGuard } from "./components/RoleGuard";
 import { usePWA } from "./hooks/usePWA";
 import { useAuth } from "./hooks/useAuth";
 import ScansPage from './pages/ScansPage';
+import ReportsHistoryPage from './pages/ReportsHistoryPage';
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -114,6 +115,7 @@ const App = () => {
                 <FamilyMemberDashboard />
               } 
             />
+            <Route path="/user/reports-history" element={<ReportsHistoryPage />} />
             
             <Route path="/appointments" element={<Appointments />} />
             <Route path="/doctor-appointments" element={<DoctorAppointments />} />

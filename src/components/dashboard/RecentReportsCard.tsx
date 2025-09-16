@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, onSnapshot, Timestamp, doc, deleteDoc, getDocs } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 interface Report {
   id: string;
@@ -396,9 +397,9 @@ export function RecentReportsCard() {
           
           {!loading && reports.length > 0 && (
             <div className="pt-2">
-              <Button variant="outline" className="w-full">
-                View All Reports
-              </Button>
+              <Button variant="outline" className="w-full" asChild>
+               <Link to="/user/reports-history">View All Reports</Link>
+            </Button>
             </div>
           )}
         </CardContent>

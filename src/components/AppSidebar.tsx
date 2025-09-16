@@ -42,7 +42,7 @@ const healthNavItems = [
 
 const otherNavItems = [
   { title: "Family Portal", url: "/user/family", icon: Users },
-  { title: "Reports & History", url: "/reports", icon: FileText },
+  { title: "Reports & History", url: "/user/reports-history", icon: FileText },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
