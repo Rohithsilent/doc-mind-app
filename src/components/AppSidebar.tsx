@@ -33,11 +33,11 @@ const mainNavItems = [
 const healthNavItems = [
   { title: "Vitals", url: "/vitals", icon: Activity },
   { title: "Scans", url: "/scans", icon: Scan },
-  { title: "Prescriptions", url: "/prescriptions", icon: Pill },
+  { title: "Prescriptions", url: "/user/prescriptions", icon: Pill },
 ];
 
 const otherNavItems = [
-  { title: "Family Portal", url: "/family", icon: Users },
+  { title: "Family Portal", url: "/user/family", icon: Users },
   { title: "Reports & History", url: "/reports", icon: FileText },
   { title: "Settings", url: "/settings", icon: Settings },
 ];

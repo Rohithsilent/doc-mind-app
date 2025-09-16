@@ -11,6 +11,7 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import HealthWorkerDashboard from "./pages/HealthWorkerDashboard";
 import FamilyPage from "./pages/FamilyPage";
 import FamilyMemberDashboard from "./pages/FamilyMemberDashboard";
+import PrescriptionsPage from "./pages/PrescriptionsPage";
 
 import NotFound from "./pages/NotFound";
 import Offline from "./pages/Offline";
@@ -79,10 +80,18 @@ const App = () => {
               } 
             />
             <Route 
-              path="/family" 
+              path="/user/family" 
               element={
                 <RoleGuard allowedRoles={['user']}>
                   <FamilyPage />
+                </RoleGuard>
+              } 
+            />
+            <Route 
+              path="/user/prescriptions" 
+              element={
+                <RoleGuard allowedRoles={['user']}>
+                  <PrescriptionsPage />
                 </RoleGuard>
               } 
             />
