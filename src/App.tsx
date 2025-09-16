@@ -22,6 +22,7 @@ import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { RoleGuard } from "./components/RoleGuard";
 import { usePWA } from "./hooks/usePWA";
 import { useAuth } from "./hooks/useAuth";
+import ScansPage from './pages/ScansPage';
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -82,6 +83,7 @@ const App = () => {
               } 
             />
             <Route path="/user/vitals-dashboard" element={<VitalsDashboard />} />
+            <Route path="/user/scans" element={<ScansPage />} />
             <Route 
               path="/user/symptom-checker" 
               element={

@@ -35,7 +35,7 @@ const mainNavItems = [
 const healthNavItems = [
   { title: "Symptom Checker", url: "/user/symptom-checker", icon: Stethoscope },
   { title: "Vitals", url: "/user/vitals-dashboard", icon: Activity },
-  { title: "Scans", url: "/scans", icon: Scan },
+   { title: "Scans", url: "/user/scans", icon: Scan },
   { title: "Prescriptions", url: "/user/prescriptions", icon: Pill },
   { title: "Appointments", url: "/Appointments", icon: Calendar },
 ];
