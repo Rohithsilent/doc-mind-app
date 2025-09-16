@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { FamilyMemberHealthPopup } from './FamilyMemberHealthPopup';
 import {
   Card,
   CardContent,
@@ -38,6 +39,7 @@ interface FamilyMemberCardProps {
 
 export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({ member }) => {
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [showHealthPopup, setShowHealthPopup] = useState(false);
   const { removeFamilyMember, isRemovingMember } = useFamilyMembers();
 
   const getStatusBadge = () => {
@@ -81,7 +83,10 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({ member }) =>
         exit={{ opacity: 0, y: -20 }}
         className="w-full"
       >
-        <Card className="bg-gradient-card shadow-card hover:shadow-glow transition-all duration-300">
+        <Card 
+          className="bg-gradient-card shadow-card hover:shadow-glow transition-all duration-300 cursor-pointer"
+          onClick={() => member.inviteStatus === 'accepted' && setShowHealthPopup(true)}
+        >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -127,7 +132,8 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({ member }) =>
                   variant="outline" 
                   size="sm" 
                   className="flex-1"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     // TODO: Implement resend invitation
                     console.log('Resend invitation to', member.email);
                   }}
@@ -139,7 +145,10 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({ member }) =>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowRemoveDialog(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowRemoveDialog(true);
+                }}
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 disabled={isRemovingMember}
               >
@@ -170,6 +179,14 @@ export const FamilyMemberCard: React.FC<FamilyMemberCardProps> = ({ member }) =>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {member.inviteStatus === 'accepted' && (
+        <FamilyMemberHealthPopup
+          member={member}
+          isOpen={showHealthPopup}
+          onClose={() => setShowHealthPopup(false)}
+        />
+      )}
     </>
   );
 };

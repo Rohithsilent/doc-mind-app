@@ -5,21 +5,31 @@ import { motion } from "framer-motion";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { FAMILY_ROLE_LABELS } from "@/types/family";
 import { useNavigate } from "react-router-dom";
+import { FamilyMemberHealthPopup } from "@/components/family/FamilyMemberHealthPopup";
+import { useState } from "react";
 
 export function FamilyMonitoringCard() {
   const { familyMembers, isLoading } = useFamilyMembers();
   const navigate = useNavigate();
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [showHealthPopup, setShowHealthPopup] = useState(false);
 
   // Transform family members data to include status and last update
   const familyMembersWithStatus = familyMembers
     .filter(member => member.inviteStatus === 'accepted')
     .map(member => ({
+      ...member,
       name: member.name,
       relation: member.customRole || FAMILY_ROLE_LABELS[member.role],
       status: "normal", // Default status - could be enhanced with real health data
       lastUpdate: "Recently", // Could be enhanced with real update timestamps
       alert: null, // Could be enhanced with real health alerts
     }));
+
+  const handleMemberClick = (member: any) => {
+    setSelectedMember(member);
+    setShowHealthPopup(true);
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -70,7 +80,8 @@ export function FamilyMonitoringCard() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors cursor-pointer"
+                onClick={() => handleMemberClick(member)}
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-secondary">
@@ -109,6 +120,14 @@ export function FamilyMonitoringCard() {
           </motion.div>
         </CardContent>
       </Card>
+
+      {selectedMember && (
+        <FamilyMemberHealthPopup
+          member={selectedMember}
+          isOpen={showHealthPopup}
+          onClose={() => setShowHealthPopup(false)}
+        />
+      )}
     </motion.div>
   );
 }
