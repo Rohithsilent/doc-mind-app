@@ -15,8 +15,8 @@ export function useEmergencyAlerts() {
       .filter(member => member.familyMemberUid)
       .map(member => member.familyMemberUid!);
     
-    // Start listening for emergency alerts from family members
-    emergencyService.startEmergencyListener(familyMemberIds);
+    // Start listening for emergency alerts from family members (excluding current user)
+    emergencyService.startEmergencyListener(familyMemberIds, user.uid);
 
     return () => {
       emergencyService.stopEmergencyListener();

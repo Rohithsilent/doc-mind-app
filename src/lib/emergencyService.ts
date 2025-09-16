@@ -54,7 +54,7 @@ export class EmergencyService {
     }
   }
 
-  startEmergencyListener(familyMemberIds: string[]): void {
+  startEmergencyListener(familyMemberIds: string[], currentUserId: string): void {
     if (this.emergencyListener) {
       this.emergencyListener();
     }
@@ -79,8 +79,8 @@ export class EmergencyService {
             status: data.status
           };
 
-          // Check if this emergency is for a family member
-          if (familyMemberIds.includes(emergency.patientId)) {
+          // Only create notifications for family members' emergencies, NOT your own
+          if (familyMemberIds.includes(emergency.patientId) && emergency.patientId !== currentUserId) {
             this.createEmergencyNotification(emergency);
           }
         }
