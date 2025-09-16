@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar, Clock, Pill, Check, Bell, Users } from "lucide-react";
 import { MedicationSchedule as ScheduleType, PrescriptionData } from "@/types/prescription";
 import { useToast } from "@/components/ui/use-toast";
+import { notificationService } from "@/lib/notificationService";
 
 export function MedicationSchedule() {
   const [schedules, setSchedules] = useState<ScheduleType[]>([]);
@@ -51,6 +52,11 @@ export function MedicationSchedule() {
       const parsed = JSON.parse(settings);
       setNotificationsEnabled(parsed.enabled || false);
       setFamilyNotifications(parsed.notifyFamily || false);
+      
+      // Start medication reminders if enabled
+      if (parsed.enabled) {
+        notificationService.startMedicationReminders();
+      }
     }
   };
 
@@ -79,9 +85,21 @@ export function MedicationSchedule() {
       description: "Marked as taken successfully",
     });
 
-    // TODO: Send notification to family members when Supabase is integrated
+    // Create notification when medication is taken
     if (familyNotifications) {
-      console.log('Would notify family members about medication taken');
+      const schedule = schedules.find(s => s.id === scheduleId);
+      if (schedule) {
+        notificationService.addNotification({
+          id: `taken-${Date.now()}-${scheduleId}`,
+          type: "success",
+          title: "Medication Taken",
+          message: `${schedule.medicationName} was taken successfully`,
+          time: "now",
+          timestamp: Date.now(),
+          urgent: false,
+          forFamily: true,
+        });
+      }
     }
   };
 
@@ -109,9 +127,11 @@ export function MedicationSchedule() {
   const toggleNotifications = async (enabled: boolean) => {
     if (enabled) {
       await requestNotificationPermission();
+      notificationService.startMedicationReminders();
     } else {
       setNotificationsEnabled(false);
       saveNotificationSettings(false, familyNotifications);
+      notificationService.stopMedicationReminders();
     }
   };
 

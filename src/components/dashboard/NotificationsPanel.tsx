@@ -1,44 +1,37 @@
-import { Bell, AlertTriangle, Info, CheckCircle } from "lucide-react";
+import { Bell, AlertTriangle, Info, CheckCircle, Pill } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { notificationService, Notification } from "@/lib/notificationService";
 
 export function NotificationsPanel() {
-  const notifications = [
-    {
-      id: 1,
-      type: "alert",
-      title: "Blood Pressure Alert",
-      message: "Your father's reading was 150/95 at 2:30 PM",
-      time: "30 min ago",
-      urgent: true,
-    },
-    {
-      id: 2,
-      type: "info",
-      title: "Medication Reminder",
-      message: "Time to take your evening blood pressure medication",
-      time: "1 hour ago",
-      urgent: false,
-    },
-    {
-      id: 3,
-      type: "success",
-      title: "Lab Results Available",
-      message: "Your recent blood work results are now available to view",
-      time: "2 hours ago",
-      urgent: false,
-    },
-    {
-      id: 4,
-      type: "info",
-      title: "Appointment Scheduled",
-      message: "Follow-up with Dr. Johnson confirmed for Dec 15th",
-      time: "3 hours ago",
-      urgent: false,
-    },
-  ];
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    loadNotifications();
+    
+    // Refresh notifications every minute
+    const interval = setInterval(loadNotifications, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadNotifications = () => {
+    const allNotifications = notificationService.getNotifications();
+    // Update time display
+    const updated = allNotifications.map(n => ({
+      ...n,
+      time: notificationService.getTimeAgo(n.timestamp)
+    }));
+    setNotifications(updated);
+  };
+
+  const handleMarkAllRead = () => {
+    notificationService.markAllAsRead();
+    setNotifications([]);
+  };
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -46,6 +39,8 @@ export function NotificationsPanel() {
         return <AlertTriangle className="h-4 w-4 text-orange-600" />;
       case "success":
         return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case "medication":
+        return <Pill className="h-4 w-4 text-purple-600" />;
       default:
         return <Info className="h-4 w-4 text-blue-600" />;
     }
@@ -125,7 +120,7 @@ export function NotificationsPanel() {
             transition={{ delay: 0.6 }}
             className="pt-2 border-t border-border flex gap-2"
           >
-            <Button variant="outline" size="sm" className="flex-1">
+            <Button variant="outline" size="sm" className="flex-1" onClick={handleMarkAllRead}>
               Mark All Read
             </Button>
             <Button variant="ghost" size="sm" className="flex-1">
