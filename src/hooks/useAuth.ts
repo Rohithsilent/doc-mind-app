@@ -5,7 +5,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  // ADD THIS IMPORT
+  GoogleAuthProvider 
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
@@ -23,6 +25,7 @@ export const useAuth = () => {
   const { toast } = useToast();
 
   const getUserRole = async (uid: string): Promise<UserRole> => {
+    // ... (This function remains unchanged)
     try {
       console.log('Fetching user role for UID:', uid);
       const userDoc = await getDoc(doc(db, 'users', uid));
@@ -35,12 +38,12 @@ export const useAuth = () => {
       return 'user';
     } catch (error) {
       console.error('Error fetching user role:', error);
-      // Don't default to 'user' immediately, let the auth state handle retries
       throw error;
     }
   };
 
   const setUserRole = async (uid: string, role: UserRole = 'user') => {
+    // ... (This function remains unchanged)
     try {
       await setDoc(doc(db, 'users', uid), { role }, { merge: true });
     } catch (error) {
@@ -49,6 +52,7 @@ export const useAuth = () => {
   };
 
   useEffect(() => {
+    // ... (This useEffect remains unchanged)
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -59,7 +63,6 @@ export const useAuth = () => {
           setUser(userWithRole);
         } catch (error) {
           console.error('Failed to get user role, keeping user without role for now');
-          // Set user without role, they'll be redirected to login
           setUser({ ...firebaseUser, role: undefined });
         }
       } else {
@@ -68,11 +71,11 @@ export const useAuth = () => {
       }
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
 
   const signUp = async (email: string, password: string, role: UserRole = 'user') => {
+    // ... (This function remains unchanged)
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await setUserRole(result.user.uid, role);
@@ -92,6 +95,7 @@ export const useAuth = () => {
   };
 
   const signIn = async (email: string, password: string) => {
+    // ... (This function remains unchanged)
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       toast({
@@ -109,8 +113,15 @@ export const useAuth = () => {
     }
   };
 
+  // --- THIS FUNCTION IS UPDATED ---
   const signInWithGoogle = async (role?: UserRole) => {
     try {
+      // Add the Google Fit scopes here
+      googleProvider.addScope("https://www.googleapis.com/auth/fitness.activity.read");
+      googleProvider.addScope("https://www.googleapis.com/auth/fitness.body.read");
+      googleProvider.addScope("https://www.googleapis.com/auth/fitness.heart_rate.read");
+      googleProvider.addScope("https://www.googleapis.com/auth/fitness.sleep.read");
+
       const result = await signInWithPopup(auth, googleProvider);
       
       // Check if user already exists
@@ -121,13 +132,13 @@ export const useAuth = () => {
         await setUserRole(result.user.uid, role);
         toast({
           title: "Account Created!",
-          description: "Welcome to your healthcare assistant.",
+          description: "Welcome. Permissions for Google Fit granted.",
         });
       } else if (userDoc.exists()) {
         // Existing user - just sign them in
         toast({
           title: "Login Successful!",
-          description: "Welcome back to your healthcare assistant.",
+          description: "Welcome back. Permissions for Google Fit updated.",
         });
       }
       
@@ -142,7 +153,20 @@ export const useAuth = () => {
     }
   };
 
+  // --- ADD THIS NEW FUNCTION ---
+  const getGoogleFitAccessToken = (result: any): string | null => {
+    if (result) {
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential?.accessToken) {
+        return credential.accessToken;
+      }
+    }
+    console.warn("Could not retrieve Google Fit access token.");
+    return null;
+  };
+  
   const logout = async () => {
+    // ... (This function remains unchanged)
     try {
       await signOut(auth);
       toast({
@@ -164,6 +188,7 @@ export const useAuth = () => {
     signUp,
     signIn,
     signInWithGoogle,
-    logout
+    logout,
+    getGoogleFitAccessToken // <-- Expose the new function
   };
 };

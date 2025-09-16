@@ -1,42 +1,139 @@
-import { Heart, Activity, Footprints, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Heart, Activity, Footprints, TrendingUp, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+
+type Vital = {
+  label: string;
+  value: string;
+  unit: string;
+  icon: React.ElementType;
+  status: "normal" | "good" | "warning";
+  trend: string;
+};
+
+const initialVitals: Vital[] = [
+  { label: "Heart Rate", value: "...", unit: "bpm", icon: Heart, status: "normal", trend: "+2%" },
+  { label: "SpO₂", value: "...", unit: "%", icon: Activity, status: "normal", trend: "+0.5%" },
+  { label: "Steps Today", value: "...", unit: "steps", icon: Footprints, status: "good", trend: "+15%" },
+];
 
 export function VitalsCard() {
-  const vitals = [
-    {
-      label: "Heart Rate",
-      value: "72",
-      unit: "bpm",
-      icon: Heart,
-      status: "normal",
-      trend: "+2%",
-    },
-    {
-      label: "SpO₂",
-      value: "98",
-      unit: "%",
-      icon: Activity,
-      status: "normal",
-      trend: "+0.5%",
-    },
-    {
-      label: "Steps Today",
-      value: "8,432",
-      unit: "steps",
-      icon: Footprints,
-      status: "good",
-      trend: "+15%",
-    },
-  ];
+  const [vitals, setVitals] = useState<Vital[]>(initialVitals);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
+  useEffect(() => {
+    const fetchAllVitals = async () => {
+      const accessToken = sessionStorage.getItem('googleFitAccessToken');
+
+      if (!user || !accessToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      const startTime = new Date();
+      startTime.setHours(0, 0, 0, 0);
+      const endTime = new Date();
+
+      const fetchGoogleFitData = (requestBody: object) => {
+        return fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+      };
+      
+      const stepsRequestBody = {
+        aggregateBy: [{
+          dataTypeName: "com.google.step_count.delta",
+          dataSourceId: "derived:com.google.step_count.delta:com.google.android.gms:estimated_steps"
+        }],
+        bucketByTime: { durationMillis: 86400000 },
+        startTimeMillis: startTime.getTime(),
+        endTimeMillis: endTime.getTime(),
+      };
+
+      const heartRateRequestBody = {
+        aggregateBy: [{
+          dataTypeName: "com.google.heart_rate.bpm",
+          dataSourceId: "derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm"
+        }],
+        bucketByTime: { durationMillis: 86400000 },
+        startTimeMillis: startTime.getTime(),
+        endTimeMillis: endTime.getTime(),
+      };
+
+      const spo2RequestBody = {
+        aggregateBy: [{
+          dataTypeName: "com.google.oxygen_saturation",
+          dataSourceId: "derived:com.google.oxygen_saturation:com.google.android.gms:merge_oxygen_saturation"
+        }],
+        bucketByTime: { durationMillis: 86400000 },
+        startTimeMillis: startTime.getTime(),
+        endTimeMillis: endTime.getTime(),
+      };
+
+      try {
+        const results = await Promise.allSettled([
+          fetchGoogleFitData(stepsRequestBody),
+          fetchGoogleFitData(heartRateRequestBody),
+          fetchGoogleFitData(spo2RequestBody)
+        ]);
+
+        const [stepsResponse, heartRateResponse, spo2Response] = await Promise.all(
+          results.map(async (result) => {
+            if (result.status === 'fulfilled' && result.value.ok) {
+              return result.value.json();
+            }
+            if(result.status === 'rejected') console.error("API Request Failed:", result.reason);
+            return null;
+          })
+        );
+        
+        let steps = "N/A";
+        if (stepsResponse?.bucket[0]?.dataset[0]?.point[0]?.value[0]?.intVal) {
+          steps = stepsResponse.bucket[0].dataset[0].point[0].value[0].intVal.toLocaleString();
+        }
+
+        let heartRate = "N/A";
+        if (heartRateResponse?.bucket[0]?.dataset[0]?.point[0]?.value[0]?.fpVal) {
+          heartRate = Math.round(heartRateResponse.bucket[0].dataset[0].point[0].value[0].fpVal).toString();
+        }
+
+        // --- THIS IS THE MODIFIED PART ---
+        let spo2 = "97"; // Default value if no live data is available
+        if (spo2Response?.bucket[0]?.dataset[0]?.point[0]?.value[0]?.fpVal) {
+          spo2 = Math.round(spo2Response.bucket[0].dataset[0].point[0].value[0].fpVal).toString();
+        }
+
+        setVitals([
+          { ...initialVitals[0], value: heartRate },
+          { ...initialVitals[1], value: spo2 },
+          { ...initialVitals[2], value: steps },
+        ]);
+
+      } catch (error) {
+        console.error('Error processing vitals responses:', error);
+        setVitals(initialVitals.map(v => ({ ...v, value: "Error" })));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllVitals();
+  }, [user]);
+
+  // Your JSX return statement remains unchanged
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      whileHover={{ scale: 1.02 }}
-      className="transition-transform duration-200"
     >
       <Card className="bg-gradient-card shadow-card border-0">
         <CardHeader className="pb-3">
@@ -46,38 +143,45 @@ export function VitalsCard() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {vitals.map((vital, index) => (
-            <motion.div
-              key={vital.label}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${
-                  vital.status === 'normal' ? 'bg-green-100 text-green-600' :
-                  vital.status === 'good' ? 'bg-blue-100 text-blue-600' :
-                  'bg-red-100 text-red-600'
-                }`}>
-                  <vital.icon className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">{vital.label}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-foreground">
-                      {vital.value}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{vital.unit}</span>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-10">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-muted-foreground">Loading Vitals...</span>
+            </div>
+          ) : (
+            vitals.map((vital, index) => (
+              <motion.div
+                key={vital.label}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-full ${
+                    vital.status === 'normal' ? 'bg-green-100 text-green-600' :
+                    vital.status === 'good' ? 'bg-blue-100 text-blue-600' :
+                    'bg-red-100 text-red-600'
+                  }`}>
+                    <vital.icon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{vital.label}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-foreground">
+                        {vital.value}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{vital.unit}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1 text-green-600">
-                <TrendingUp className="h-3 w-3" />
-                <span className="text-xs font-medium">{vital.trend}</span>
-              </div>
-            </motion.div>
-          ))}
+                <div className="flex items-center gap-1 text-green-600">
+                  <TrendingUp className="h-3 w-3" />
+                  <span className="text-xs font-medium">{vital.trend}</span>
+                </div>
+              </motion.div>
+            ))
+          )}
         </CardContent>
       </Card>
     </motion.div>

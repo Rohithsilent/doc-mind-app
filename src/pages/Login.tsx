@@ -8,6 +8,9 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, ArrowLeft, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
+// Make sure this import is present
+import { GoogleAuthProvider } from "firebase/auth";
+
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -18,31 +21,29 @@ const Login = () => {
   const navigate = useNavigate();
 
   const validateForm = () => {
+    // This function is unchanged
     const newErrors: { email?: string; password?: string } = {};
-    
     if (!email) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = "Please enter a valid email";
     }
-    
     if (!password) {
       newErrors.password = "Password is required";
     } else if (password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // This function is unchanged
     e.preventDefault();
     if (validateForm()) {
       setIsLoading(true);
       try {
         await signIn(email, password);
-        // Let the App.tsx handle redirection based on user role
         window.location.href = '/dashboard';
       } catch (error) {
         // Error is handled in useAuth hook
@@ -52,41 +53,61 @@ const Login = () => {
     }
   };
 
+  // --- THIS FUNCTION IS UPDATED WITH DEBUGGING LOGS ---
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      await signInWithGoogle();
-      // Let the App.tsx handle redirection based on user role
+      // Step 1: Call the signInWithGoogle function
+      const result = await signInWithGoogle();
+      console.log("1. Login Result:", result); // <-- DEBUG LOG
+
+      if (result) {
+        // Step 2: Get the credential from the result
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        console.log("2. Credential:", credential); // <-- DEBUG LOG
+
+        // Step 3: Extract the access token
+        if (credential?.accessToken) {
+          const accessToken = credential.accessToken;
+          console.log("3. Access Token Found:", accessToken); // <-- DEBUG LOG
+          
+          // Step 4: Save the token to session storage
+          sessionStorage.setItem('googleFitAccessToken', accessToken);
+          console.log("4. Token saved to sessionStorage!");
+
+        } else {
+          console.error("ERROR: Access Token not found in credential.");
+        }
+      } else {
+        console.error("ERROR: Google Sign-In did not return a result.");
+      }
+      
+      // Step 5: Redirect to the dashboard
       window.location.href = '/dashboard';
+
     } catch (error) {
-      // Error is handled in useAuth hook
+      console.error("ERROR in handleGoogleLogin:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // --- ALL THE UI CODE BELOW IS UNCHANGED ---
+
   const cardVariants = {
     hidden: { opacity: 0, scale: 0.95, y: 40 },
-    visible: { 
-      opacity: 1, 
-      scale: 1, 
-      y: 0
-    }
+    visible: { opacity: 1, scale: 1, y: 0 }
   };
 
   const inputVariants = {
     hidden: { opacity: 0, x: -20 },
-    visible: { 
-      opacity: 1, 
-      x: 0
-    }
+    visible: { opacity: 1, x: 0 }
   };
 
   return (
     <div className="min-h-screen bg-gradient-hero relative overflow-hidden flex items-center justify-center p-6">
       <div className="absolute inset-0 bg-black/20" />
       
-      {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-20 w-32 h-32 bg-white rounded-full blur-3xl" />
         <div className="absolute bottom-32 right-32 w-40 h-40 bg-white rounded-full blur-3xl" />
@@ -99,7 +120,6 @@ const Login = () => {
         animate="visible"
         variants={cardVariants}
       >
-        {/* Back Button */}
         <motion.div 
           className="mb-6"
           variants={inputVariants}
