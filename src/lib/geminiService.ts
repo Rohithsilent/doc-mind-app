@@ -233,79 +233,106 @@ export class GeminiService {
     prescriptions: PrescriptionData[] = [], 
     reports: any[] = []
   ): Promise<string> {
-    try {
-      console.log('Chatting with Gemini Health Assistant...');
+    const maxRetries = 3;
+    const baseDelay = 1000; // 1 second
 
-      // Format patient data for context
-      const prescriptionContext = prescriptions.length > 0 
-        ? prescriptions.map(p => 
-            `Prescription from ${p.extractedAt}:\n` +
-            p.medications.map(med => 
-              `- ${med.name} (${med.dosage}) - ${med.frequency}`
-            ).join('\n')
-          ).join('\n\n')
-        : 'No prescription data available.';
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Chatting with Gemini Health Assistant... (Attempt ${attempt}/${maxRetries})`);
 
-      const reportsContext = reports.length > 0
-        ? reports.map(r => `Report: ${r.title} (${r.type}) - ${r.date}`).join('\n')
-        : 'No reports available.';
+        // Format patient data for context
+        const prescriptionContext = prescriptions.length > 0 
+          ? prescriptions.map(p => 
+              `Prescription from ${p.extractedAt}:\n` +
+              p.medications.map(med => 
+                `- ${med.name} (${med.dosage}) - ${med.frequency}`
+              ).join('\n')
+            ).join('\n\n')
+          : 'No prescription data available.';
 
-      const prompt = `
-        You are an AI health assistant helping a patient. You have access to their medical data below.
-        
-        PATIENT'S PRESCRIPTION DATA:
-        ${prescriptionContext}
-        
-        PATIENT'S REPORTS:
-        ${reportsContext}
-        
-        PATIENT'S QUESTION: ${question}
-        
-        Instructions:
-        - Provide helpful, accurate health information
-        - Reference the patient's specific prescriptions and reports when relevant
-        - Always remind users to consult healthcare professionals for medical decisions
-        - Be concise but informative
-        - If the question is about general health topics not related to their data, provide general advice
-        - If asking about specific medications or reports, use their actual data
-        
-        Please provide a helpful response:
-      `;
+        const reportsContext = reports.length > 0
+          ? reports.map(r => `Report: ${r.title} (${r.type}) - ${r.date}`).join('\n')
+          : 'No reports available.';
 
-      const response = await fetch(`${this.API_URL}?key=${this.API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
+        const prompt = `
+          You are an AI health assistant helping a patient. You have access to their medical data below.
+          
+          PATIENT'S PRESCRIPTION DATA:
+          ${prescriptionContext}
+          
+          PATIENT'S REPORTS:
+          ${reportsContext}
+          
+          PATIENT'S QUESTION: ${question}
+          
+          Instructions:
+          - Provide helpful, accurate health information
+          - Reference the patient's specific prescriptions and reports when relevant
+          - Always remind users to consult healthcare professionals for medical decisions
+          - Be concise but informative
+          - If the question is about general health topics not related to their data, provide general advice
+          - If asking about specific medications or reports, use their actual data
+          
+          Please provide a helpful response:
+        `;
+
+        const response = await fetch(`${this.API_URL}?key=${this.API_KEY}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
-      });
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            },
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
-      }
+        if (response.status === 503) {
+          throw new Error('SERVICE_OVERLOADED');
+        }
 
-      const data = await response.json();
-      
-      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-        return data.candidates[0].content.parts[0].text;
-      } else {
-        throw new Error('Invalid response format from Gemini API');
+        if (!response.ok) {
+          throw new Error(`Gemini API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+          return data.candidates[0].content.parts[0].text;
+        } else {
+          throw new Error('Invalid response format from Gemini API');
+        }
+      } catch (error) {
+        console.error(`Gemini Chat Error (Attempt ${attempt}):`, error);
+        
+        // Handle specific error types
+        if (error instanceof Error && error.message === 'SERVICE_OVERLOADED') {
+          if (attempt < maxRetries) {
+            const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+            console.log(`API overloaded, retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          } else {
+            return "The AI service is currently experiencing high demand. Please try again in a few moments. In the meantime, feel free to consult with your healthcare provider for any urgent medical questions.";
+          }
+        }
+        
+        // For the last attempt or non-retryable errors
+        if (attempt === maxRetries) {
+          return "I'm having trouble connecting to the AI service right now. Please try asking your question again in a moment, or consult with your healthcare provider for medical advice.";
+        }
       }
-    } catch (error) {
-      console.error('Gemini Chat Error:', error);
-      return "I'm sorry, I'm having trouble processing your question right now. Please consult with your healthcare provider for medical advice, or try asking your question again.";
     }
+    
+    return "Service temporarily unavailable. Please try again.";
   }
 }
