@@ -11,7 +11,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
-export type UserRole = 'user' | 'doctor' | 'healthworker';
+export type UserRole = 'user' | 'doctor' | 'healthworker' | 'family';
 
 export interface AuthUser extends User {
   role?: UserRole;

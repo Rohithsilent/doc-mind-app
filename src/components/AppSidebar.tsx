@@ -26,7 +26,7 @@ import {
 import { motion } from "framer-motion";
 
 const mainNavItems = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Dashboard", url: "/user/dashboard", icon: Home },
   { title: "Emergency SOS", url: "/emergency", icon: AlertTriangle },
 ];
 
