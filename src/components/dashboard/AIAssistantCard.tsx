@@ -11,6 +11,7 @@ import { PrescriptionData } from "@/types/prescription";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
+import ReactMarkdown from 'react-markdown';
 
 export function AIAssistantCard() {
   const [question, setQuestion] = useState("");
@@ -167,8 +168,39 @@ export function AIAssistantCard() {
                   <span className="text-sm">Analyzing your question...</span>
                 </div>
               ) : (
-                <div className="text-sm text-foreground whitespace-pre-wrap">
-                  {response}
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <ReactMarkdown
+                    components={{
+                      ul: ({ children }) => (
+                        <ul className="space-y-1 my-2">
+                          {children}
+                        </ul>
+                      ),
+                      li: ({ children }) => (
+                        <li className="flex items-start gap-2 text-sm">
+                          <span className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
+                          <span>{children}</span>
+                        </li>
+                      ),
+                      p: ({ children }) => (
+                        <p className="text-sm text-foreground mb-2 leading-relaxed">
+                          {children}
+                        </p>
+                      ),
+                      strong: ({ children }) => (
+                        <strong className="font-semibold text-foreground">
+                          {children}
+                        </strong>
+                      ),
+                      em: ({ children }) => (
+                        <em className="italic text-muted-foreground">
+                          {children}
+                        </em>
+                      ),
+                    }}
+                  >
+                    {response}
+                  </ReactMarkdown>
                 </div>
               )}
             </motion.div>
