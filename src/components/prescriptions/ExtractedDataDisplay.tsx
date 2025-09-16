@@ -5,6 +5,8 @@ import { Clock, Pill, FileText, Calendar } from "lucide-react";
 import { PrescriptionData } from "@/types/prescription";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { PrescriptionService } from "@/lib/prescriptionService";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ExtractedDataDisplayProps {
   data: PrescriptionData;
@@ -12,22 +14,20 @@ interface ExtractedDataDisplayProps {
 
 export function ExtractedDataDisplay({ data }: ExtractedDataDisplayProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSavePrescription = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to save prescriptions",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // TODO: Implement Firestore save when Supabase integration is available
-      console.log('Saving prescription data:', data);
-      
-      // For now, save to localStorage as fallback
-      const existingPrescriptions = JSON.parse(localStorage.getItem('prescriptions') || '[]');
-      const newPrescription = {
-        ...data,
-        id: Date.now().toString(),
-        savedAt: new Date().toISOString(),
-      };
-      
-      existingPrescriptions.push(newPrescription);
-      localStorage.setItem('prescriptions', JSON.stringify(existingPrescriptions));
+      await PrescriptionService.savePrescription(user.uid, data);
       
       toast({
         title: "Prescription saved",
