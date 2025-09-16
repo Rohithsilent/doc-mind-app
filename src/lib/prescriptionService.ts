@@ -3,6 +3,7 @@ import {
   doc, 
   addDoc, 
   getDocs, 
+  deleteDoc,
   query, 
   where, 
   orderBy,
@@ -61,6 +62,17 @@ export class PrescriptionService {
       return prescriptions;
     } catch (error) {
       console.error('Error getting prescriptions:', error);
+      throw error;
+    }
+  }
+
+  // Delete a prescription from Firestore
+  static async deletePrescription(prescriptionId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, 'prescriptions', prescriptionId));
+      console.log('Prescription deleted successfully:', prescriptionId);
+    } catch (error) {
+      console.error('Error deleting prescription:', error);
       throw error;
     }
   }

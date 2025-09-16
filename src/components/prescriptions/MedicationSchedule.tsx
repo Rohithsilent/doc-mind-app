@@ -6,23 +6,32 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Calendar, Clock, Pill, Check, Bell, Users } from "lucide-react";
 import { MedicationSchedule as ScheduleType, PrescriptionData } from "@/types/prescription";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { notificationService } from "@/lib/notificationService";
+import { PrescriptionService } from "@/lib/prescriptionService";
+import { useAuth } from "@/hooks/useAuth";
 
 export function MedicationSchedule() {
   const [schedules, setSchedules] = useState<ScheduleType[]>([]);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [familyNotifications, setFamilyNotifications] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    generateScheduleFromPrescriptions();
-    loadNotificationSettings();
-  }, []);
+    if (user?.uid) {
+      generateScheduleFromPrescriptions();
+      loadNotificationSettings();
+    }
+  }, [user?.uid]);
 
-  const generateScheduleFromPrescriptions = () => {
+  const generateScheduleFromPrescriptions = async () => {
+    if (!user?.uid) return;
+    
+    setIsLoading(true);
     try {
-      const prescriptions: PrescriptionData[] = JSON.parse(localStorage.getItem('prescriptions') || '[]');
+      const prescriptions = await PrescriptionService.getPrescriptions(user.uid);
       const newSchedules: ScheduleType[] = [];
 
       prescriptions.forEach(prescription => {
@@ -43,6 +52,13 @@ export function MedicationSchedule() {
       setSchedules(newSchedules);
     } catch (error) {
       console.error('Error generating schedule:', error);
+      toast({
+        title: "Error loading schedule",
+        description: "Failed to load medication schedule",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -206,7 +222,12 @@ export function MedicationSchedule() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {sortedTimes.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading medication schedule...</p>
+            </div>
+          ) : sortedTimes.length > 0 ? (
             <div className="space-y-6">
               {sortedTimes.map((time, index) => (
                 <motion.div

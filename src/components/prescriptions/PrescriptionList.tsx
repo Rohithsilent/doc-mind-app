@@ -6,17 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FileText, Search, Calendar, Pill, Trash2 } from "lucide-react";
 import { PrescriptionData } from "@/types/prescription";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { PrescriptionService } from "@/lib/prescriptionService";
+import { useAuth } from "@/hooks/useAuth";
 
 export function PrescriptionList() {
   const [prescriptions, setPrescriptions] = useState<PrescriptionData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredPrescriptions, setFilteredPrescriptions] = useState<PrescriptionData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadPrescriptions();
-  }, []);
+    if (user?.uid) {
+      loadPrescriptions();
+    }
+  }, [user?.uid]);
 
   useEffect(() => {
     const filtered = prescriptions.filter(prescription =>
@@ -27,13 +33,13 @@ export function PrescriptionList() {
     setFilteredPrescriptions(filtered);
   }, [prescriptions, searchTerm]);
 
-  const loadPrescriptions = () => {
+  const loadPrescriptions = async () => {
+    if (!user?.uid) return;
+    
+    setIsLoading(true);
     try {
-      const saved = localStorage.getItem('prescriptions');
-      if (saved) {
-        const parsedPrescriptions = JSON.parse(saved);
-        setPrescriptions(parsedPrescriptions);
-      }
+      const userPrescriptions = await PrescriptionService.getPrescriptions(user.uid);
+      setPrescriptions(userPrescriptions);
     } catch (error) {
       console.error('Error loading prescriptions:', error);
       toast({
@@ -41,14 +47,16 @@ export function PrescriptionList() {
         description: "Failed to load saved prescriptions",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const deletePrescription = (id: string) => {
+  const deletePrescription = async (id: string) => {
     try {
+      await PrescriptionService.deletePrescription(id);
       const updated = prescriptions.filter(p => p.id !== id);
       setPrescriptions(updated);
-      localStorage.setItem('prescriptions', JSON.stringify(updated));
       
       toast({
         title: "Prescription deleted",
@@ -83,7 +91,14 @@ export function PrescriptionList() {
 
       {/* Prescriptions List */}
       <div className="space-y-4">
-        {filteredPrescriptions.length > 0 ? (
+        {isLoading ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading prescriptions...</p>
+            </CardContent>
+          </Card>
+        ) : filteredPrescriptions.length > 0 ? (
           filteredPrescriptions.map((prescription, index) => (
             <motion.div
               key={prescription.id}

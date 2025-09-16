@@ -13,6 +13,7 @@ export interface PrescriptionData {
   id?: string;
   imageUrl?: string;
   healthSuggestions?: string;
+  savedAt?: string;
 }
 
 export interface MedicationSchedule {
