@@ -45,6 +45,7 @@ export class FamilyHealthService {
       }
       
       console.log('Fetching vitals for user ID:', actualUserId);
+      // Vitals uses userId as document ID, so we query by document ID directly
       const vitalsDoc = await getDoc(doc(db, 'vitals', actualUserId));
       
       if (vitalsDoc.exists()) {
