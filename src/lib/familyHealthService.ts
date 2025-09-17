@@ -12,10 +12,35 @@ import { db } from '@/lib/firebase';
 import { PrescriptionData } from '@/types/prescription';
 
 export class FamilyHealthService {
-  // Get vitals data for a family member
-  static async getFamilyMemberVitals(familyMemberUid: string) {
+  // Get the actual user ID for a family member
+  static async getFamilyMemberUserId(familyMemberId: string): Promise<string | null> {
     try {
-      const vitalsDoc = await getDoc(doc(db, 'vitals', familyMemberUid));
+      const familyMemberDoc = await getDoc(doc(db, 'familyMembers', familyMemberId));
+      
+      if (familyMemberDoc.exists()) {
+        const data = familyMemberDoc.data();
+        return data.familyMemberUid || null; // This is the actual Firebase user ID
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting family member user ID:', error);
+      return null;
+    }
+  }
+  // Get vitals data for a family member
+  static async getFamilyMemberVitals(familyMemberId: string) {
+    try {
+      // First get the actual user ID for this family member
+      const actualUserId = await this.getFamilyMemberUserId(familyMemberId);
+      
+      if (!actualUserId) {
+        console.log('No actual user ID found for family member:', familyMemberId);
+        return null;
+      }
+      
+      console.log('Fetching vitals for user ID:', actualUserId);
+      const vitalsDoc = await getDoc(doc(db, 'vitals', actualUserId));
       
       if (vitalsDoc.exists()) {
         const data = vitalsDoc.data();
@@ -28,6 +53,7 @@ export class FamilyHealthService {
         };
       }
       
+      console.log('No vitals document found for user ID:', actualUserId);
       return null;
     } catch (error) {
       console.error('Error fetching family member vitals:', error);
@@ -36,11 +62,20 @@ export class FamilyHealthService {
   }
 
   // Get prescriptions for a family member
-  static async getFamilyMemberPrescriptions(familyMemberUid: string): Promise<PrescriptionData[]> {
+  static async getFamilyMemberPrescriptions(familyMemberId: string): Promise<PrescriptionData[]> {
     try {
+      // First get the actual user ID for this family member
+      const actualUserId = await this.getFamilyMemberUserId(familyMemberId);
+      
+      if (!actualUserId) {
+        console.log('No actual user ID found for family member:', familyMemberId);
+        return [];
+      }
+      
+      console.log('Fetching prescriptions for user ID:', actualUserId);
       const q = query(
         collection(db, 'prescriptions'),
-        where('userUid', '==', familyMemberUid),
+        where('userUid', '==', actualUserId),
         orderBy('savedAt', 'desc'),
         limit(10)
       );
@@ -59,6 +94,7 @@ export class FamilyHealthService {
         } as PrescriptionData;
       });
 
+      console.log('Found prescriptions:', prescriptions.length);
       return prescriptions;
     } catch (error) {
       console.error('Error fetching family member prescriptions:', error);
@@ -66,15 +102,24 @@ export class FamilyHealthService {
     }
   }
 
-  // Get reports for a family member (placeholder - extend as needed)
-  static async getFamilyMemberReports(familyMemberUid: string) {
+  // Get reports for a family member
+  static async getFamilyMemberReports(familyMemberId: string) {
     try {
+      // First get the actual user ID for this family member  
+      const actualUserId = await this.getFamilyMemberUserId(familyMemberId);
+      
+      if (!actualUserId) {
+        console.log('No actual user ID found for family member:', familyMemberId);
+        return [];
+      }
+      
+      console.log('Fetching reports for user ID:', actualUserId);
       // This is a placeholder implementation
       // Replace with actual reports collection query when available
       const q = query(
         collection(db, 'reports'),
-        where('userUid', '==', familyMemberUid),
-        orderBy('createdAt', 'desc'),
+        where('userId', '==', actualUserId), // Note: using userId instead of userUid based on your screenshot
+        orderBy('date', 'desc'),
         limit(10)
       );
       
@@ -85,12 +130,15 @@ export class FamilyHealthService {
           id: doc.id,
           title: data.title || 'Medical Report',
           type: data.type || 'General',
-          date: data.date || data.createdAt?.toDate()?.toLocaleDateString(),
+          date: data.date?.toDate()?.toLocaleDateString() || 'Date not specified',
           content: data.content,
-          createdAt: data.createdAt?.toDate()?.toISOString()
+          status: data.status,
+          urgent: data.urgent,
+          createdAt: data.date?.toDate()?.toISOString()
         };
       });
 
+      console.log('Found reports:', reports.length);
       return reports;
     } catch (error) {
       console.error('Error fetching family member reports:', error);
