@@ -63,18 +63,31 @@ export const FamilyMemberHealthPopup: React.FC<FamilyMemberHealthPopupProps> = (
     setIsLoading(true);
     setError(null);
     try {
+      console.log('Fetching health data for member:', member.id, member.name);
+      
       const [vitals, prescriptions, reports] = await Promise.allSettled([
         familyHealthService.getFamilyMemberVitals(member.id),
         familyHealthService.getFamilyMemberPrescriptions(member.id),
         familyHealthService.getFamilyMemberReports(member.id),
       ]);
 
+      const vitalsData = vitals.status === 'fulfilled' ? vitals.value : null;
+      const prescriptionsData = prescriptions.status === 'fulfilled' ? prescriptions.value || [] : [];
+      const reportsData = reports.status === 'fulfilled' ? reports.value || [] : [];
+      
+      console.log('Fetched data summary:', {
+        vitals: vitalsData ? 'Available' : 'None',
+        prescriptions: prescriptionsData.length,
+        reports: reportsData.length
+      });
+
       setHealthData({
-        vitals: vitals.status === 'fulfilled' ? vitals.value : null,
-        prescriptions: prescriptions.status === 'fulfilled' ? prescriptions.value : [],
-        reports: reports.status === 'fulfilled' ? reports.value : [],
+        vitals: vitalsData,
+        prescriptions: prescriptionsData,
+        reports: reportsData,
       });
     } catch (err) {
+      console.error('Error fetching health data:', err);
       setError('Failed to load health data');
     } finally {
       setIsLoading(false);

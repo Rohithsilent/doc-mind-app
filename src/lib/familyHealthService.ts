@@ -15,13 +15,18 @@ export class FamilyHealthService {
   // Get the actual user ID for a family member
   static async getFamilyMemberUserId(familyMemberId: string): Promise<string | null> {
     try {
+      console.log('Getting user ID for family member:', familyMemberId);
       const familyMemberDoc = await getDoc(doc(db, 'familyMembers', familyMemberId));
       
       if (familyMemberDoc.exists()) {
         const data = familyMemberDoc.data();
-        return data.familyMemberUid || null; // This is the actual Firebase user ID
+        console.log('Family member data:', data);
+        const userId = data.familyMemberUid || data.userId || null;
+        console.log('Extracted user ID:', userId);
+        return userId;
       }
       
+      console.log('Family member document does not exist');
       return null;
     } catch (error) {
       console.error('Error getting family member user ID:', error);
