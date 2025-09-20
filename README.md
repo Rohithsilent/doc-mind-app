@@ -263,6 +263,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Made with ❤️ for healthcare accessibility**
 
 [![Star this repo](https://img.shields.io/github/stars/Rohithsilent/doc-mind-app?style=social)](https://github.com/Rohithsilent/doc-mind-app)
-[![Follow us](https://img.shields.io/twitter/follow/docmind?style=social)](https://twitter.com/docmind)
 
 </div>
