@@ -1,4 +1,4 @@
-# 🧠 DocMind
+# 🧠 Doc-Mind
 
 <div align="center">
 
