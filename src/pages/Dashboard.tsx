@@ -34,7 +34,7 @@ export default function Dashboard() {
                   Welcome back, User!
                 </h1>
                 <p className="text-muted-foreground">
-                  Here's your health overview for today, December 7th, 2024
+                  Here's your health overview for today
                 </p>
               </motion.div>
 
