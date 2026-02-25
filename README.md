@@ -1,4 +1,4 @@
-# 🧠 Doc-Mind
+ni# 🧠 Doc-Mind
 
 <div align="center">
 
@@ -262,6 +262,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ for healthcare accessibility**
 
-[![Star this repo](https://img.shields.io/github/stars/Rohithsilent/doc-mind-app?style=social)](https://github.com/Rohithsilent/doc-mind-app)
 
-</div>
